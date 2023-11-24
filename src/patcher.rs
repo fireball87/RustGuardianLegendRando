@@ -28,14 +28,6 @@ impl Patcher {
         self.changes.push(change);
     }
 
-    fn pad_hex(hex: &str, digits: usize) -> String {
-        let mut padded_hex = hex.to_string();
-        while padded_hex.len() < digits {
-            padded_hex = format!("0{}", padded_hex);
-        }
-        padded_hex
-    }
-
     #[allow(dead_code)]
     pub fn build_ips(&self) -> Vec<u8> {
         let mut byte_array: Vec<u8> = Vec::new();
@@ -43,7 +35,7 @@ impl Patcher {
 
         for change in &self.changes {
             let offset = &change.offset;
-            let offset_bytes = hex::decode(Self::pad_hex(offset, 6)).unwrap();
+            let offset_bytes = hex::decode(crate::helpers::pad_hex(offset, 6)).unwrap();
             byte_array.extend_from_slice(&offset_bytes);
 
             let change_hex = &change.hex;

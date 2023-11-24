@@ -1,11 +1,12 @@
 mod config;
 mod corridor;
+mod helpers;
 mod logging;
 mod patcher;
-mod rebalance;
+mod qol_hacks;
 mod rebalance;
 
-use crate::config::{Config, CorridorConfig};
+use crate::config::{Config, CorridorConfig, QOLHacks};
 use crate::patcher::Patcher;
 
 fn main() {
@@ -14,20 +15,31 @@ fn main() {
 
     let mut patcher = Patcher::new();
 
-    let c_cfg = CorridorConfig {
+    let corridor_config = CorridorConfig {
         shuffle_skies: true,
         shuffle_ground: true,
         shuffle_corridors: true,
         shuffle_bosses: true,
         shuffle_final_boss: true,
     };
+    let qol_hacks = QOLHacks {
+        faster_starting_fire: true,
+        fix_hyper_laser: true,
+        enemy_erasers_unlocked_from_start: true,
+        remove_flash: true,
+    };
 
     let cfg = Config {
-        corridor_config: c_cfg,
+        corridor_config,
+        qol_hacks,
+        rebalance_bosses: true,
+        randomize_boss_health: true,
         log: true,
     };
 
-    corridor::shuffle_corridor_components(&mut patcher, cfg);
+    qol_hacks::handle_qol_hacks(&mut patcher, &cfg);
+    corridor::shuffle_corridor_components(&mut patcher, &cfg);
+    rebalance::handle_rebalance(&mut patcher, &cfg);
 
     if writefiles {
         let rawdata = if secret {

@@ -6,9 +6,12 @@ mod shuffle_corridors;
 mod shuffle_ground;
 mod shuffle_skies;
 
-pub fn shuffle_corridor_components(patcher: &mut Patcher, config: Config) {
+pub fn shuffle_corridor_components(patcher: &mut Patcher, config: &Config) {
     if config.corridor_config.shuffle_skies {
         shuffle_skies::shuffle_skies(patcher);
+    } else {
+        //fix the c16 bug
+        patcher.add_change("7F", "1301b");
     }
 
     let shuffled_bosses = if config.corridor_config.shuffle_bosses {

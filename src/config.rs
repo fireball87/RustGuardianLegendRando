@@ -4,6 +4,7 @@ pub struct Config {
     pub(crate) rebalance_bosses: bool,
     pub(crate) randomize_boss_health: bool,
     pub(crate) log: bool,
+    pub seed: String,
 }
 
 pub struct CorridorConfig {

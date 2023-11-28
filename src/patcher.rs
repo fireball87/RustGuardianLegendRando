@@ -24,7 +24,13 @@ impl Patcher {
     }
 
     pub fn add_change(&mut self, hex: &str, offset: &str) {
-        let change = Change::new(hex, offset);
+        let padded = if hex.len() % 2 == 1 {
+            "0".to_string() + hex
+        } else {
+            hex.to_string()
+        };
+
+        let change = Change::new(padded.as_str(), offset);
         self.changes.push(change);
     }
 
@@ -35,6 +41,7 @@ impl Patcher {
 
         for change in &self.changes {
             let offset = &change.offset;
+
             let offset_bytes = hex::decode(crate::helpers::pad_hex(offset, 6)).unwrap();
             byte_array.extend_from_slice(&offset_bytes);
 

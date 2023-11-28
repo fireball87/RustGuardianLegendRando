@@ -2,14 +2,15 @@ use crate::patcher::Patcher;
 use im::*;
 use rand::seq::SliceRandom;
 use rand::Rng;
+use rand_chacha::ChaCha8Rng;
 
 #[derive(Clone)]
 struct Boss {
     #[allow(dead_code)]
     boss: &'static str,
-    patch: Vector<&'static str>,
-    pointer: Vector<&'static str>,
-    ids: Vector<&'static str>,
+    patch: Vec<&'static str>,
+    pointer: Vec<&'static str>,
+    ids: Vec<&'static str>,
 }
 
 #[derive(Clone)]
@@ -20,70 +21,71 @@ pub struct OutputBoss {
 pub fn randomize_bosses(
     patcher: &mut Patcher,
     randomize_final_boss: bool,
-) -> (Vector<OutputBoss>, Vector<OutputBoss>, Option<OutputBoss>) {
-    let mut table = vector![
+    rng: &mut ChaCha8Rng,
+) -> (Vec<OutputBoss>, Vec<OutputBoss>, Option<OutputBoss>) {
+    let mut table = vec![
         Boss {
             boss: "eyegore",
-            patch: vector!["003780013A800242DA834FF6", "00378001028E0242DA834FF6"],
-            pointer: vector!["C2BF", "CEBF"],
-            ids: vector!["18", "19"],
+            patch: vec!["003780013A800242DA834FF6", "00378001028E0242DA834FF6"],
+            pointer: vec!["C2BF", "CEBF"],
+            ids: vec!["18", "19"],
         },
         Boss {
             boss: "fleepa",
-            patch: vector!["0037800139888243B2"],
-            pointer: vector!["B8B8"],
-            ids: vector!["40", "41"],
+            patch: vec!["0037800139888243B2"],
+            pointer: vec!["B8B8"],
+            ids: vec!["40", "41"],
         },
         Boss {
             boss: "optomon",
-            patch: vector!["0037800140C68253F6"],
-            pointer: vector!["5DA0"],
-            ids: vector!["2d", "2e", "2f"],
+            patch: vec!["0037800140C68253F6"],
+            pointer: vec!["5DA0"],
+            ids: vec!["2d", "2e", "2f"],
         },
         Boss {
             boss: "crawdaddy",
-            patch: vector!["0037808149BA"],
-            pointer: vector!["FD9E"],
-            ids: vector!["45"],
+            patch: vec!["0037808149BA"],
+            pointer: vec!["FD9E"],
+            ids: vec!["45"],
         },
         Boss {
             boss: "bombarderclawbot",
-            patch: vector!["003780013588022AD88351F6"],
-            pointer: vector!["F2BC"],
-            ids: vector!["4c", "4d", "24", "25", "26"],
+            patch: vec!["003780013588022AD88351F6"],
+            pointer: vec!["F2BC"],
+            ids: vec!["4c", "4d", "24", "25", "26"],
         },
         Boss {
             boss: "teramute",
-            patch: vector!["0037800144B08203F2"],
-            pointer: vector!["DBA3"],
-            ids: vector!["46"],
+            patch: vec!["0037800144B08203F2"],
+            pointer: vec!["DBA3"],
+            ids: vec!["46"],
         },
         Boss {
             boss: "glider",
-            patch: vector!["0037800134C68235E6"],
-            pointer: vector!["20AE"],
-            ids: vector!["47"],
+            patch: vec!["0037800134C68235E6"],
+            pointer: vec!["20AE"],
+            ids: vec!["47"],
         },
         Boss {
             boss: "zibzub",
-            patch: vector!["0037800135888241D2"],
-            pointer: vector!["7CA7"],
-            ids: vector!["23"],
+            patch: vec!["0037800135888241D2"],
+            pointer: vec!["7CA7"],
+            ids: vec!["23"],
         },
         Boss {
             boss: "grimgrin",
-            patch: vector!["00378001049A821CA2"],
-            pointer: vector!["8AB6"],
-            ids: vector!["48", "49"],
+            patch: vec!["00378001049A821CA2"],
+            pointer: vec!["8AB6"],
+            ids: vec!["48", "49"],
         },
     ];
 
     if randomize_final_boss {
-        table.push_back(Boss {
+        table.push(Boss {
             boss: "it",
-            patch: vector!["00378001368802459C8318D0"],
-            pointer: vector!["0585"],
-            ids: vector!["4f"],
+            patch: vec!["00378001368802459C8318D0"],
+            pointer: vec!["0585"],
+            ids: vec!["4f"],
         });
     }
 
@@ -96,15 +98,15 @@ pub fn randomize_bosses(
                 "{:X}",
                 bankstart + u32::from_str_radix(&flipped_pointer, 16).unwrap()
             );
-            patcher.add_change(&boss.patch[x], offset.as_str());
+            patcher.add_change(boss.patch[x], offset.as_str());
         }
     }
 
     let mut final_boss = None;
 
     if randomize_final_boss {
-        let boss_array_id = rand::random::<usize>() % table.len();
-        let id_array_id = rand::random::<usize>() % table[boss_array_id].ids.len();
+        let boss_array_id = rng.gen_range(0..table.len());
+        let id_array_id = rng.gen_range(0..table[boss_array_id].ids.len());
         let id = table[boss_array_id].ids[id_array_id];
 
         println!("final boss is {}, {}", table[boss_array_id].boss, id);
@@ -134,12 +136,12 @@ pub fn randomize_bosses(
         }
     }
 
-    let mut c21bosses = Vector::new();
+    let mut c21bosses = Vec::new();
     let mut c21sourcelist = table.clone();
     for _ in 0..6 {
-        let x = rand::thread_rng().gen_range(0..(c21sourcelist.len()));
+        let x = rng.gen_range(0..(c21sourcelist.len()));
 
-        let key = rand::thread_rng().gen_range(0..(c21sourcelist[x].ids.len()));
+        let key = rng.gen_range(0..(c21sourcelist[x].ids.len()));
 
         let pointer = if c21sourcelist[x].pointer.len() > 1 {
             c21sourcelist[x].pointer[key]
@@ -147,7 +149,7 @@ pub fn randomize_bosses(
             c21sourcelist[x].pointer[0]
         };
         let id = c21sourcelist[x].ids[key];
-        c21bosses.push_back(OutputBoss {
+        c21bosses.push(OutputBoss {
             id: u32::from_str_radix(id, 16).unwrap(),
             pointer: u32::from_str_radix(pointer, 16).unwrap(),
         });
@@ -170,7 +172,7 @@ pub fn randomize_bosses(
         }
     }
 
-    level_bosses.shuffle(&mut rand::thread_rng());
+    level_bosses.shuffle(rng);
 
     let eye_cluster = OutputBoss {
         id: u32::MAX,
@@ -179,13 +181,13 @@ pub fn randomize_bosses(
     level_bosses.insert(6, eye_cluster.clone());
     level_bosses.insert(16, eye_cluster.clone());
 
-    let return_bosses = Vector::from(level_bosses);
+    //let return_bosses = Vec::from(level_bosses);
 
     for (index, row) in c21bosses.iter().enumerate() {
-        println!("c21 boss {} is {}", index, row.id);
+        println!("c21 boss {} is {:02X}", index, row.id);
     }
-    for (index, row) in return_bosses.iter().enumerate() {
-        println!("corridor boss {} is {}", index, row.id);
+    for (index, row) in level_bosses.iter().enumerate() {
+        println!("corridor boss {} is {:02X}", index + 1, row.id);
     }
-    (return_bosses, c21bosses, final_boss)
+    (level_bosses, c21bosses, final_boss)
 }

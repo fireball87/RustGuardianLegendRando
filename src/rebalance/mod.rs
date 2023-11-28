@@ -5,23 +5,24 @@ mod health;
 use crate::config::Config;
 use crate::patcher::Patcher;
 use rand::Rng;
+use rand_chacha::ChaCha8Rng;
 
-pub fn handle_rebalance(patcher: &mut Patcher, config: &Config) {
+pub fn handle_rebalance(patcher: &mut Patcher, config: &Config, rng: &mut ChaCha8Rng) {
     if config.rebalance_bosses
         || config.corridor_config.shuffle_corridors
         || config.corridor_config.shuffle_bosses
     {
         let rand_health = config.randomize_boss_health;
-        rebalance_all(patcher, rand_health);
+        rebalance_all(patcher, rand_health, rng);
     }
 }
-fn rebalance_all(patcher: &mut Patcher, randomize_health: bool) {
+fn rebalance_all(patcher: &mut Patcher, randomize_health: bool, rng: &mut ChaCha8Rng) {
     patcher.add_change("606060", "1c172");
     patcher.add_change("20a9ff", "1cfd0");
     patcher.add_change("9d20062088fe60", "1ffb9");
 
     shift_damage(patcher);
-    shift_health(patcher, randomize_health);
+    shift_health(patcher, randomize_health, rng);
     shift_projectiles(patcher);
 }
 
@@ -190,145 +191,145 @@ fn shift_damage(patcher: &mut Patcher) {
     );
 }
 
-fn shift_health(patcher: &mut Patcher, randomize_health: bool) {
+fn shift_health(patcher: &mut Patcher, randomize_health: bool, rng: &mut ChaCha8Rng) {
     let health_offset: u32 = 118971;
 
     if randomize_health {
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(12..=24)),
+            &to_patch(rng.gen_range(12..=24)),
             &to_offset(health_offset + entity::EYEGORE_BLUE),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(12..=24)),
+            &to_patch(rng.gen_range(12..=24)),
             &to_offset(health_offset + entity::EYEGORE_RED),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(12..=24)),
+            &to_patch(rng.gen_range(12..=24)),
             &to_offset(health_offset + entity::ZIBZUB),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(12..=24)),
+            &to_patch(rng.gen_range(12..=24)),
             &to_offset(health_offset + entity::CLAWBOT_GREEN),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(12..=24)),
+            &to_patch(rng.gen_range(12..=24)),
             &to_offset(health_offset + entity::CLAWBOT_BLUE),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(12..=24)),
+            &to_patch(rng.gen_range(12..=24)),
             &to_offset(health_offset + entity::CLAWBOT_RED),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(12..=24)),
+            &to_patch(rng.gen_range(12..=24)),
             &to_offset(health_offset + entity::OPTOMON_GREEN),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(12..=24)),
+            &to_patch(rng.gen_range(12..=24)),
             &to_offset(health_offset + entity::OPTOMON_BLUE),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(12..=24)),
+            &to_patch(rng.gen_range(12..=24)),
             &to_offset(health_offset + entity::OPTOMON_RED),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(12..=24)),
+            &to_patch(rng.gen_range(12..=24)),
             &to_offset(health_offset + entity::FLEEPA_BLUE),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(12..=24)),
+            &to_patch(rng.gen_range(12..=24)),
             &to_offset(health_offset + entity::FLEEPA_RED),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(12..=24)),
+            &to_patch(rng.gen_range(12..=24)),
             &to_offset(health_offset + entity::CRAWDADDY),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(12..=24)),
+            &to_patch(rng.gen_range(12..=24)),
             &to_offset(health_offset + entity::TERRAMUTE),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(4..=8)),
+            &to_patch(rng.gen_range(4..=8)),
             &to_offset(health_offset + entity::GLIDER),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(22..=35)),
+            &to_patch(rng.gen_range(22..=35)),
             &to_offset(health_offset + entity::GRIMGRIN_BLUE),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(24..=37)),
+            &to_patch(rng.gen_range(24..=37)),
             &to_offset(health_offset + entity::GRIMGRIN_RED),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(8..=12)),
+            &to_patch(rng.gen_range(8..=12)),
             &to_offset(health_offset + entity::BOMBARDER_RED),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(8..=12)),
+            &to_patch(rng.gen_range(8..=12)),
             &to_offset(health_offset + entity::BOMBARDER_BLUE),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(12..=24)),
+            &to_patch(rng.gen_range(12..=24)),
             &to_offset(health_offset + entity::EYEGORE_BLUE),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(22..=35)),
+            &to_patch(rng.gen_range(22..=35)),
             &to_offset(health_offset + entity::IT),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(4..=12)),
+            &to_patch(rng.gen_range(4..=12)),
             &to_offset(health_offset + entity::SPIDER_GREEN),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(4..=12)),
+            &to_patch(rng.gen_range(4..=12)),
             &to_offset(health_offset + entity::SPIDER_BLUE),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(4..=12)),
+            &to_patch(rng.gen_range(4..=12)),
             &to_offset(health_offset + entity::SPIDER_RED),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(4..=12)),
+            &to_patch(rng.gen_range(4..=12)),
             &to_offset(health_offset + entity::CRAB_GREEN),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(4..=12)),
+            &to_patch(rng.gen_range(4..=12)),
             &to_offset(health_offset + entity::CRAB_BLUE),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(4..=12)),
+            &to_patch(rng.gen_range(4..=12)),
             &to_offset(health_offset + entity::CRAB_RED),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(4..=12)),
+            &to_patch(rng.gen_range(4..=12)),
             &to_offset(health_offset + entity::CARPET),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(4..=12)),
+            &to_patch(rng.gen_range(4..=12)),
             &to_offset(health_offset + entity::BOUNCER_GREEN),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(4..=12)),
+            &to_patch(rng.gen_range(4..=12)),
             &to_offset(health_offset + entity::BOUNCER_RED),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(4..=12)),
+            &to_patch(rng.gen_range(4..=12)),
             &to_offset(health_offset + entity::BOUNCER_BLUE),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(4..=12)),
+            &to_patch(rng.gen_range(4..=12)),
             &to_offset(health_offset + entity::CRYSTAL_STAR),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(4..=12)),
+            &to_patch(rng.gen_range(4..=12)),
             &to_offset(health_offset + entity::SKULL),
         );
 
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(4..=12)),
+            &to_patch(rng.gen_range(4..=12)),
             &to_offset(health_offset + entity::GROUND_EYE_BIG),
         );
         patcher.add_change(
-            &to_patch(rand::thread_rng().gen_range(4..=12)),
+            &to_patch(rng.gen_range(4..=12)),
             &to_offset(health_offset + entity::GROUND_EYE_SMALL),
         );
     } else {

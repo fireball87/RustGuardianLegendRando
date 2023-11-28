@@ -1,5 +1,7 @@
 use crate::patcher::Patcher;
 use rand::seq::SliceRandom;
+use rand_chacha::ChaCha8Rng;
+
 struct CorridorSkyData {
     address: &'static str,
     data: &'static str,
@@ -135,7 +137,7 @@ fn parse_c2_length(length: &mut usize, input: &str) {
     }
 }
 
-pub fn shuffle_skies(patcher: &mut Patcher) {
+pub fn shuffle_skies(patcher: &mut Patcher, rng: &mut ChaCha8Rng) {
     let input_data = get_sky_data();
 
     for corridor in input_data {
@@ -162,7 +164,7 @@ pub fn shuffle_skies(patcher: &mut Patcher) {
             }
             input = &input[length..];
         }
-        split.shuffle(&mut rand::thread_rng());
+        split.shuffle(rng);
         let patchstring = split.join("");
         patcher.add_change(&patchstring, corridor.address);
     }

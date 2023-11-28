@@ -2,12 +2,14 @@ use crate::corridor::shuffle_bosses::OutputBoss;
 use crate::patcher::Patcher;
 use im::*;
 use rand::seq::SliceRandom;
+use rand_chacha::ChaCha8Rng;
 
 pub fn shuffle_corridors(
     patcher: &mut Patcher,
     shuffle_corridors: bool,
-    shuffled_bosses: Option<(Vector<OutputBoss>, Vector<OutputBoss>, Option<OutputBoss>)>,
+    shuffled_bosses: &Option<(Vec<OutputBoss>, Vec<OutputBoss>, Option<OutputBoss>)>,
     log: bool,
+    rng: &mut ChaCha8Rng,
 ) {
     let mut table: Vec<[u32; 4]> = vec![
         [1, 0x40, 0x509C, 0x21],
@@ -33,46 +35,42 @@ pub fn shuffle_corridors(
     ];
     // Refresh the list with the shuffled bosses
 
-    let mut bosses = String::new();
-
     if let Some(shuffled_bosses) = shuffled_bosses {
         for (x, row) in table.iter_mut().enumerate() {
-            if let Some(entry) = shuffled_bosses.0.get(x) {
+            if let Some(entry) = &shuffled_bosses.0.get(x) {
                 if entry.id != u32::MAX {
                     row[1] = entry.id;
                 }
             }
         }
 
-        if let Some(c21_final) = shuffled_bosses.1.last() {
+        if let Some(c21_final) = &shuffled_bosses.1.last() {
             let id = c21_final.id;
             let boss_str = &format!("{:02X}", id);
-            bosses.push_str(boss_str);
+            //bosses.push_str(boss_str);
             patcher.add_change(boss_str, "d3cb");
             patcher.add_change(boss_str, "d3ac");
         }
 
-        if let Some(final_boss) = shuffled_bosses.2 {
+        /*if let Some(final_boss) = &shuffled_bosses.2 {
             let id = final_boss.id;
             bosses.push_str(&format!("{:02X}", id));
-        }
+        }*/
     }
-
     if shuffle_corridors {
-        table.shuffle(&mut rand::thread_rng());
+        table.shuffle(rng);
     }
 
+    let mut bosses = String::new();
     let mut pointers = String::new();
     let mut graphics = String::new();
-
     if log {
         println!();
     }
 
-    for row in &table {
-        if log {
-            print!("{},", row[0]);
-        }
+    for row in table {
+        print!("{:02X},", row[1]);
+
         bosses.push_str(&format!("{:02X}", row[1]));
         pointers.push_str(&format!("{:04X}", row[2]));
         graphics.push_str(&format!("{:02X}", row[3]));

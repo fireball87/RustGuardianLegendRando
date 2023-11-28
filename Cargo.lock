@@ -218,6 +218,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "rand_seeder"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cf2890aaef0aa82719a50e808de264f9484b74b442e1a3a0e5ee38243ac40bdb"
+dependencies = [
+ "rand_core",
+]
+
+[[package]]
 name = "rand_xoshiro"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -255,6 +264,8 @@ dependencies = [
  "hex",
  "im",
  "rand",
+ "rand_chacha",
+ "rand_seeder",
 ]
 
 [[package]]

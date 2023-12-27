@@ -1,5 +1,4 @@
 use crate::patcher::Patcher;
-use im::*;
 use rand::seq::SliceRandom;
 use rand::Rng;
 use rand_chacha::ChaCha8Rng;

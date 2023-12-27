@@ -2,6 +2,7 @@ mod config;
 mod corridor;
 mod helpers;
 mod logging;
+mod maze;
 mod patcher;
 mod qol_hacks;
 mod rebalance;

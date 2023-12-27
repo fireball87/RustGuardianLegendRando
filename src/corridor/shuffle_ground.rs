@@ -1,6 +1,5 @@
 use crate::corridor::shuffle_bosses::OutputBoss;
 use crate::patcher::Patcher;
-use im::Vector;
 use rand::seq::SliceRandom;
 use rand_chacha::ChaCha8Rng;
 

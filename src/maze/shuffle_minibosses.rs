@@ -1,4 +1,4 @@
-pub fn randomize_minibosses(patcher: &mut Patcher, allow_missingno: bool, rng: &mut ChaCha8Rng) {
+/*pub fn randomize_minibosses(patcher: &mut Patcher, allow_missingno: bool, rng: &mut ChaCha8Rng) {
     // 22 minibosses
     // 3 * a number between 0 and 11, 12 if allow_missingno
     let monstervalues = if allow_missingno { 12 } else { 11 };
@@ -10,4 +10,4 @@ pub fn randomize_minibosses(patcher: &mut Patcher, allow_missingno: bool, rng: &
     }
 
     patcher.add_change(&datum, "1669D");
-}
+}*/

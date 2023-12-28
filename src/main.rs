@@ -7,13 +7,12 @@ mod patcher;
 mod qol_hacks;
 mod rebalance;
 
-use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
-use rand_seeder::{Seeder, SipHasher};
+use rand_seeder::Seeder;
 
 use crate::config::{Config, CorridorConfig, QOLHacks};
 use crate::patcher::Patcher;
-use rand::{distributions::Alphanumeric, Rng, SeedableRng};
+use rand::{distributions::Alphanumeric, Rng};
 
 fn generate(patcher: &mut Patcher, cfg: &Config) {
     let mut rng: ChaCha8Rng = Seeder::from(&cfg.seed).make_rng();

@@ -1,5 +1,5 @@
 #[derive(PartialEq, Default, Clone)]
-enum RoomType {
+pub enum RoomType {
     #[default]
     Normal,
     Save,
@@ -13,21 +13,21 @@ enum RoomType {
 
 #[derive(Default, Clone)]
 pub struct Room {
-    area: Option<i32>, // Number between 0 and 10, or None if undefined
-    accessible: bool,
-    starting_point: bool, // Starting point is the connection to area 0
-    exit_up: bool,
-    exit_down: bool,
-    exit_left: bool,
-    exit_right: bool,
-    avoid_special: bool,   // Special code to avoid adding stuff to the ring
-    room_type: RoomType,   // Enum variant representing room type
-    block_set: Option<()>, // Shared between item rooms and normal rooms
-    chip_tile: bool,       // If set, blocks are chip blocks; None for nothing, 0 for blue chips
-    item_id: Option<()>,   // Can also be miniboss ID, reused for shop and text ID
-    enemy_type: i32,       // 0 for empty, 1-47 for valid enemy values (documented in map)
-                           // Also use enemy type for corridor
-                           // Contained items, bosses, etc., will be added later
+    pub area: Option<i32>, // Number between 0 and 10, or None if undefined
+    pub accessible: bool,
+    pub starting_point: bool, // Starting point is the connection to area 0
+    pub exit_up: bool,
+    pub exit_down: bool,
+    pub exit_left: bool,
+    pub exit_right: bool,
+    pub avoid_special: bool, // Special code to avoid adding stuff to the ring
+    pub room_type: RoomType, // Enum variant representing room type
+    pub block_set: Option<String>, // Shared between item rooms and normal rooms
+    pub chip_tile: bool,     // If set, blocks are chip blocks; None for nothing, 0 for blue chips
+    pub item_id: Option<String>, // Can also be miniboss ID, reused for shop and text ID
+    pub enemy_type: i32,     // 0 for empty, 1-47 for valid enemy values (documented in map)
+                             // Also use enemy type for corridor
+                             // Contained items, bosses, etc., will be added later
 }
 
 impl Room {

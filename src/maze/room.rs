@@ -31,7 +31,7 @@ pub struct Room {
 }
 
 impl Room {
-    fn count_bytes(&self) -> i32 {
+    pub(crate) fn count_bytes(&self) -> i32 {
         if !self.accessible {
             return 1;
         }

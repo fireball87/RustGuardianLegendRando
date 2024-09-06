@@ -19,6 +19,7 @@ fn generate(patcher: &mut Patcher, cfg: &Config) {
     qol_hacks::handle_qol_hacks(patcher, cfg);
     corridor::shuffle_corridor_components(patcher, cfg, &mut rng);
     rebalance::handle_rebalance(patcher, cfg, &mut rng);
+    maze::shuffle_minibosses::shuffle_minibosses(patcher,cfg, &mut rng);
 }
 
 fn main() {
@@ -137,7 +138,6 @@ mod tests {
         generate(&mut p2, &cfg);
 
         let ips2 = p2.build_ips();
-
         assert_eq!(ips1, ips2);
     }
 }

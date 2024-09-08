@@ -3,6 +3,7 @@ pub struct Config {
     pub(crate) qol_hacks: QOLHacks,
     pub(crate) rebalance_bosses: bool,
     pub(crate) randomize_boss_health: bool,
+    pub(crate) secret: bool,
     pub(crate) log: bool,
     pub seed: String,
 }

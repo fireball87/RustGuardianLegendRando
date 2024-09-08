@@ -1,4 +1,8 @@
-fn get_library_size() -> usize {
+use rand::Rng;
+use rand_chacha::ChaCha8Rng;
+use crate::maze::map::Map;
+
+fn get_library_size() -> i32 {
     return 1;
 }
 
@@ -85,6 +89,26 @@ fn get_library_entry(item: i32) -> Vec<Vec<i32>> {
         // Add other cases if needed
         _ => panic!("Requested Invalid Map Template"),
     }
+}
+
+
+pub fn get_sub_division(rng: &mut ChaCha8Rng) -> Vec<Vec<i32>>{
+    // select from a template
+
+    let mut template = get_library_entry(rng.gen_range(0..get_library_size()));
+
+    let should_flip = rng.gen_range(0..=1);
+    if should_flip == 1 {
+        flip_horizontally_in_place(&mut template);
+    }
+    
+    let rotate_times = rng.gen_range(0..=3);
+    
+    for _n in 0..=rotate_times {
+        rotate_90_degrees(&mut template);
+    }
+    
+    template
 }
 
 fn flip_horizontally_in_place(matrix: &mut Vec<Vec<i32>>) {

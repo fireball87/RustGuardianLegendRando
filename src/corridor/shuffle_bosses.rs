@@ -94,7 +94,7 @@ pub fn randomize_bosses(
             let bankstart: u32 = 0x8010;
             let flipped_pointer = format!("{}{}", &boss.pointer[x][2..], &boss.pointer[x][0..2]);
             let offset = format!(
-                "{:X}",
+                "{:02X}",
                 bankstart + u32::from_str_radix(&flipped_pointer, 16).unwrap()
             );
             patcher.add_change(boss.patch[x], offset.as_str());

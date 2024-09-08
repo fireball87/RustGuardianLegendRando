@@ -11,8 +11,8 @@ pub fn shuffle_minibosses(patcher: &mut Patcher, config: &Config, rng: &mut ChaC
 
     let mut datum = String::new();
     for _ in 0..22 {
-        let value = rng.gen_range(0..monstervalues * 3);
-        datum.push_str(&format!("{:X}", value));
+        let value = rng.gen_range(0..=monstervalues) * 3;
+        datum.push_str(&format!("{:02X}", value));
     }
 
     patcher.add_change(&datum, "1669D");

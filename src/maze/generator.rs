@@ -470,7 +470,7 @@ impl Generator {
         secret: bool,
         rng: &mut ChaCha8Rng
     ) {
-        let mut locations = self.createListOfSuitableRooms(map, area, true, true);
+        let mut locations = self.createListOfSuitableRooms(map, area, true, false);
 
         // place corridors
         if area == 0 {
@@ -603,19 +603,21 @@ impl Generator {
     }
 
     fn placeNonImportantRooms(&self, map: &mut Map, area: i32, secret: bool, rng: &mut ChaCha8Rng) {
-        let mut locations = self.createListOfSuitableRooms(map, area, true, true);
+        let mut locations = self.createListOfSuitableRooms(map, area, true, false);
 
         // place save room
-        if !locations.is_empty() {
-            let index = rng.gen_range(0.. locations.len());
+        if(area <= 1) {
+            if !locations.is_empty() {
+                let index = rng.gen_range(0..locations.len());
 
-            let y_pos = &locations[index].0;
-            let x_pos = &locations[index].1;
-            map.data[[*y_pos,*x_pos]].room_type = RoomType::Save;
+                let y_pos = &locations[index].0;
+                let x_pos = &locations[index].1;
+                map.data[[*y_pos, *x_pos]].room_type = RoomType::Save;
 
-            locations.remove(index);
-        } else {
-            panic!("map has no valid spot to place a save room");
+                locations.remove(index);
+            } else {
+                panic!("map has no valid spot to place a save room");
+            }
         }
 
         // place text rooms

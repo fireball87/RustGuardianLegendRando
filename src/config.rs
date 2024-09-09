@@ -1,11 +1,17 @@
 pub struct Config {
     pub(crate) corridor_config: CorridorConfig,
     pub(crate) qol_hacks: QOLHacks,
+    pub(crate) bad_ideas: BadIdeas,
+    pub(crate) patch_colors: bool,
     pub(crate) rebalance_bosses: bool,
     pub(crate) randomize_boss_health: bool,
     pub(crate) secret: bool,
     pub(crate) log: bool,
     pub seed: String,
+}
+
+pub struct BadIdeas {
+    pub(crate) completely_random_colors: bool
 }
 
 pub struct CorridorConfig {

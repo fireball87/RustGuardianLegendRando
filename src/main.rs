@@ -6,11 +6,12 @@ mod maze;
 mod patcher;
 mod qol_hacks;
 mod rebalance;
+mod colors;
 
 use rand_chacha::ChaCha8Rng;
 use rand_seeder::Seeder;
 
-use crate::config::{Config, CorridorConfig, QOLHacks};
+use crate::config::{BadIdeas, Config, CorridorConfig, QOLHacks};
 use crate::patcher::Patcher;
 use rand::{distributions::Alphanumeric, Rng};
 use crate::maze::map::Map;
@@ -52,6 +53,10 @@ fn generate(patcher: &mut Patcher, cfg: &Config) {
             panic!("{}",e);
         }
     }
+    
+    if(cfg.patch_colors){
+        colors::patch_themes::patch_all(cfg,patcher,&mut rng);
+    }
 
     qol_hacks::handle_qol_hacks(patcher, cfg);
 
@@ -76,6 +81,9 @@ fn main() {
         enemy_erasers_unlocked_from_start: true,
         remove_flash: true,
     };
+    let bad_ideas = BadIdeas {
+        completely_random_colors: true,
+    };
 
     let rng_seed = rand::thread_rng()
         .sample_iter(&Alphanumeric)
@@ -86,6 +94,8 @@ fn main() {
     let cfg = Config {
         corridor_config,
         qol_hacks,
+        bad_ideas,
+        patch_colors: true,
         rebalance_bosses: true,
         randomize_boss_health: true,
         secret,

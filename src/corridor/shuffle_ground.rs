@@ -147,6 +147,7 @@ fn tokenize_corridor(
     let mut boss_hit = false;
     let mut last_c6: Option<usize> = None;
 
+    let mut lock = false;
     while !scratch.is_empty() {
         let time = format!("{}{}", &scratch[2..4], &scratch[0..2]);
         let command = scratch[4..6].to_string();
@@ -165,6 +166,7 @@ fn tokenize_corridor(
         match command.as_str() {
             "00" | "01" | "04" | "07" => digits = 4,
             "05" => {
+                lock = true;
                 if corridor_number == 21 {
                     digits = 2;
                 } else {
@@ -206,7 +208,7 @@ fn tokenize_corridor(
             command: command.to_string(),
             data,
             enemies,
-            locked: false,
+            locked: lock,
             time_to_next: None,
         };
         let mut set_last_c7 = false;
@@ -246,12 +248,14 @@ fn tokenize_corridor(
                         if let Some(last_c7) = last_c7 {
                             let lc7 = &mut return_array[last_c7];
 
-                            let pointer_string = format!("{:04X}", level_data.pointer);
-                            lc7.data = Some(pointer_string);
-                            println!(
-                                "corridor {} pointer :{:04X}",
-                                corridor_number, level_data.pointer
-                            );
+                            if(level_data.pointer != u32::MAX){
+                                let pointer_string = format!("{:04X}", level_data.pointer);
+                                lc7.data = Some(pointer_string);
+                                println!(
+                                    "corridor {} pointer :{:04X}",
+                                    corridor_number, level_data.pointer
+                                );
+                            }
                         }
                     }
                 }
@@ -278,6 +282,7 @@ fn tokenize_corridor(
                     if command == "05" || command == "01" {
                         if command == "05" {
                             boss_hit = true;
+                            last_c6_entry.locked = true;
                         }
                         last_c6_entry.locked = true;
                         last_c6 = None;
@@ -298,6 +303,10 @@ fn tokenize_corridor(
         if corridor_number == 0 && entry.time == "074E" {
             entry.locked = true;
         }
+        
+        /*if corridor_number == 7 && entry.time == "01B8" {
+            entry.locked = true;
+        }*/
 
         return_array.push(entry);
         if set_last_c6 {
@@ -415,13 +424,14 @@ fn shuffle_individual_corridor_internals(input_array: &mut Vec<TokenEntry>, rng:
     let mut index = 0;
     for section in &sections {
         let mut time = 0;
+        let section_time = u16::from_str_radix(&section.time, 16).unwrap();
         for entry in &section.entries {
             while input_array[index].command != "06" || input_array[index].locked {
                 index += 1;
             }
             let entry_time = format!(
                 "{:04X}",
-                u16::from_str_radix(&section.time, 16).unwrap() + time
+                section_time + time
             );
             input_array[index].time = entry_time.clone();
             if let Some(time_to_next) = &entry.time_to_next {

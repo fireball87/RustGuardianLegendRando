@@ -123,7 +123,7 @@ pub fn shuffle_corridor_internals(
     ];
 
     for corridor in input_data {
-        let mut tokenized = tokenize_corridor(corridor.data, corridor.id, &bosses);
+        let mut tokenized = tokenize_corridor(corridor.data, corridor.id, bosses);
         if shuffle_internals && corridor.id != 21 && corridor.id != 22 {
             shuffle_individual_corridor_internals(&mut tokenized, rng);
         }
@@ -435,7 +435,7 @@ fn shuffle_individual_corridor_internals(input_array: &mut Vec<TokenEntry>, rng:
             );
             input_array[index].time = entry_time.clone();
             if let Some(time_to_next) = &entry.time_to_next {
-                time += u16::from_str_radix(&time_to_next, 16).unwrap();
+                time += u16::from_str_radix(time_to_next, 16).unwrap();
             }
             index += 1;
         }

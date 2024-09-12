@@ -56,7 +56,7 @@ fn pick_level(level: &str, area:Vec<PatchSet>, rng: &mut ChaCha8Rng, patcher: &m
                 let index = 0;
                 let selected = &area[index];
                 for values in &selected.patches {
-                    patcher.add_change(&*get_ran_palette(rng), values.address);
+                    patcher.add_change(&get_ran_palette(rng), values.address);
                 }
             }
             ColorStrategy::ColorTheory(hue) => {
@@ -89,11 +89,8 @@ fn patch_single_area(level: &str, patcher: &mut Patcher,rng: &mut ChaCha8Rng, se
         }
     }
     let mut should_flip = false;
-    if flip == 1 && flip_allowed {
-        if !flip_safe || selected.saturation_flip_safe
-        {
-            should_flip = true;
-        }
+    if flip == 1 && flip_allowed && (!flip_safe || selected.saturation_flip_safe) {
+        should_flip = true;
     }
     
     let colorshift;
@@ -196,7 +193,7 @@ fn get_c0() -> (&'static str,Vec<PatchSet>){
     // 0x17341 -> 22,12,16
     // used by eye cannons and stuff
     ("c0",vec![
-        /*PatchSet{
+        PatchSet{
             name: "Vanilla",
             theme_set: vec![ThemeSet::All, ThemeSet::Vanilla],
             saturation_flip_safe: false,
@@ -265,7 +262,7 @@ fn get_c0() -> (&'static str,Vec<PatchSet>){
                 Patch{ address: "17341", hex_code: "021216"},
                 Patch{ address: "17344", hex_code: "160819"},
             ],
-        },*/
+        },
         PatchSet{
             name: "Shadow", 
             theme_set: vec![ThemeSet::All,ThemeSet::Crafted],

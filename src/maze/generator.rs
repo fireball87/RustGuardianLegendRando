@@ -489,7 +489,7 @@ impl Generator {
                 // 7
 
                 // check that the rooms fit on the map
-                if (item.0 - 1 >= 0) && (item.0 + 1 <= 23) && (item.1 - 2 > 0) {
+                if (item.0 > 0) && (item.0 < 23) && (item.1 - 2 > 0) {
                     // if the room can be placed in space check All the rooms
 
                     let rooms = vec![
@@ -720,11 +720,9 @@ pub fn place_cardinal_directions(&self, map: &mut Map, rng: &mut ChaCha8Rng) {
             if north_room_distance.is_none() || distance_away < north_room_distance.unwrap() {
                 north_room = Some((y_pos, x_pos));
                 north_room_distance = Some(distance_away);
-            } else if (north_avg - x_pos as f64).abs() == north_room_distance.unwrap() {
-                if rng.gen_bool(0.5) {
-                    north_room = Some((y_pos, x_pos));
-                    north_room_distance = Some(distance_away);
-                }
+            } else if (north_avg - x_pos as f64).abs() == north_room_distance.unwrap() && rng.gen_bool(0.5) {
+                north_room = Some((y_pos, x_pos));
+                north_room_distance = Some(distance_away);
             }
         }
 
@@ -733,11 +731,9 @@ pub fn place_cardinal_directions(&self, map: &mut Map, rng: &mut ChaCha8Rng) {
             if south_room_distance.is_none() || distance_away < south_room_distance.unwrap() {
                 south_room = Some((y_pos, x_pos));
                 south_room_distance = Some(distance_away);
-            } else if (south_avg - x_pos as f64).abs() == south_room_distance.unwrap() {
-                if rng.gen_bool(0.5) {
-                    south_room = Some((y_pos, x_pos));
-                    south_room_distance = Some(distance_away);
-                }
+            } else if (south_avg - x_pos as f64).abs() == south_room_distance.unwrap() && rng.gen_bool(0.5) {
+                south_room = Some((y_pos, x_pos));
+                south_room_distance = Some(distance_away);
             }
         }
 
@@ -746,11 +742,9 @@ pub fn place_cardinal_directions(&self, map: &mut Map, rng: &mut ChaCha8Rng) {
             if west_room_distance.is_none() || distance_away < west_room_distance.unwrap() {
                 west_room = Some((y_pos, x_pos));
                 west_room_distance = Some(distance_away);
-            } else if (west_avg - y_pos as f64).abs() == west_room_distance.unwrap() {
-                if rng.gen_bool(0.5) {
-                    west_room = Some((y_pos, x_pos));
-                    west_room_distance = Some(distance_away);
-                }
+            } else if (west_avg - y_pos as f64).abs() == west_room_distance.unwrap() && rng.gen_bool(0.5) {
+                west_room = Some((y_pos, x_pos));
+                west_room_distance = Some(distance_away);
             }
         }
 
@@ -759,11 +753,9 @@ pub fn place_cardinal_directions(&self, map: &mut Map, rng: &mut ChaCha8Rng) {
             if east_room_distance.is_none() || distance_away < east_room_distance.unwrap() {
                 east_room = Some((y_pos, x_pos));
                 east_room_distance = Some(distance_away);
-            } else if (east_avg - y_pos as f64).abs() == east_room_distance.unwrap() {
-                if rng.gen_bool(0.5) {
-                    east_room = Some((y_pos, x_pos));
-                    east_room_distance = Some(distance_away);
-                }
+            } else if (east_avg - y_pos as f64).abs() == east_room_distance.unwrap() && rng.gen_bool(0.5) {
+                east_room = Some((y_pos, x_pos));
+                east_room_distance = Some(distance_away);
             }
         }
     }
@@ -797,7 +789,7 @@ pub fn place_cardinal_directions(&self, map: &mut Map, rng: &mut ChaCha8Rng) {
             let y_pos = &locations[index].0;
             let x_pos = &locations[index].1;
             map.data[[*y_pos,*x_pos]].room_type = RoomType::Corridor;
-            map.data[[*y_pos,*x_pos]].enemy_type = corridor_id as i32;
+            map.data[[*y_pos,*x_pos]].enemy_type = corridor_id;
 
             locations.remove(index);
         } else {
@@ -851,75 +843,59 @@ pub fn place_cardinal_directions(&self, map: &mut Map, rng: &mut ChaCha8Rng) {
         }
 
         for &(y_pos, x_pos) in &starting_rooms {
-            if map.data[[y_pos,x_pos]].exit_up {
-                if map.data[[y_pos - 1,x_pos]].room_type == RoomType::Normal
-                    && map.data[[y_pos - 1,x_pos]].block_set.is_none()
-                {
-                    let chips = rng.gen_range(0..= 1); // do I want chips;
-                    if chips == 0 {
-                        // No
-                        map.data[[y_pos - 1,x_pos]].block_set =
-                            Some(maze::items::item_library::get_random_room_block(false, 1, 2,rng));
-                        map.data[[y_pos - 1,x_pos]].chip_tile = false;
-                    } else {
-                        map.data[[y_pos - 1,x_pos]].block_set =
-                            Some(maze::items::item_library::get_random_room_block(true, 1, 2,rng));
-                        map.data[[y_pos - 1,x_pos]].chip_tile = true;
-                    }
+            if map.data[[y_pos,x_pos]].exit_up && map.data[[y_pos - 1,x_pos]].room_type == RoomType::Normal && map.data[[y_pos - 1,x_pos]].block_set.is_none() {
+                let chips = rng.gen_range(0..= 1); // do I want chips;
+                if chips == 0 {
+                    // No
+                    map.data[[y_pos - 1,x_pos]].block_set =
+                        Some(maze::items::item_library::get_random_room_block(false, 1, 2,rng));
+                    map.data[[y_pos - 1,x_pos]].chip_tile = false;
+                } else {
+                    map.data[[y_pos - 1,x_pos]].block_set =
+                        Some(maze::items::item_library::get_random_room_block(true, 1, 2,rng));
+                    map.data[[y_pos - 1,x_pos]].chip_tile = true;
                 }
             }
 
-            if map.data[[y_pos,x_pos]].exit_down {
-                if map.data[[y_pos + 1,x_pos]].room_type == RoomType::Normal
-                    && map.data[[y_pos + 1,x_pos]].block_set.is_none()
-                {
-                    let chips = rng.gen_range(0..= 1); // Do I want chips;
-                    if chips == 0 {
-                        // No
-                        map.data[[y_pos + 1,x_pos]].block_set =
-                            Some(maze::items::item_library::get_random_room_block(false, 1, 1,rng));
-                        map.data[[y_pos + 1,x_pos]].chip_tile = false;
-                    } else {
-                        map.data[[y_pos + 1,x_pos]].block_set =
-                            Some(maze::items::item_library::get_random_room_block(true, 1, 1, rng));
-                        map.data[[y_pos + 1,x_pos]].chip_tile = true;
-                    }
+            if map.data[[y_pos,x_pos]].exit_down && map.data[[y_pos + 1,x_pos]].room_type == RoomType::Normal && map.data[[y_pos + 1,x_pos]].block_set.is_none() {
+                let chips = rng.gen_range(0..= 1); // Do I want chips;
+                if chips == 0 {
+                    // No
+                    map.data[[y_pos + 1,x_pos]].block_set =
+                        Some(maze::items::item_library::get_random_room_block(false, 1, 1,rng));
+                    map.data[[y_pos + 1,x_pos]].chip_tile = false;
+                } else {
+                    map.data[[y_pos + 1,x_pos]].block_set =
+                        Some(maze::items::item_library::get_random_room_block(true, 1, 1, rng));
+                    map.data[[y_pos + 1,x_pos]].chip_tile = true;
                 }
             }
 
-            if map.data[[y_pos,x_pos]].exit_left {
-                if map.data[[y_pos,x_pos - 1]].room_type == RoomType::Normal
-                    && map.data[[y_pos,x_pos - 1]].block_set.is_none()
-                {
-                    let chips = rng.gen_range(0..= 1); // Do I want chips;
-                    if chips == 0 {
-                        // No
-                        map.data[[y_pos,x_pos - 1]].block_set =
-                            Some(maze::items::item_library::get_random_room_block(false, 1, 4,rng));
-                        map.data[[y_pos,x_pos - 1]].chip_tile = false;
-                    } else {
-                        map.data[[y_pos,x_pos - 1]].block_set =
-                            Some(maze::items::item_library::get_random_room_block(true, 1, 4,rng));
-                        map.data[[y_pos,x_pos - 1]].chip_tile = true;
-                    }
+            if map.data[[y_pos,x_pos]].exit_left && map.data[[y_pos,x_pos - 1]].room_type == RoomType::Normal && map.data[[y_pos,x_pos - 1]].block_set.is_none() {
+                let chips = rng.gen_range(0..= 1); // Do I want chips;
+                if chips == 0 {
+                    // No
+                    map.data[[y_pos,x_pos - 1]].block_set =
+                        Some(maze::items::item_library::get_random_room_block(false, 1, 4,rng));
+                    map.data[[y_pos,x_pos - 1]].chip_tile = false;
+                } else {
+                    map.data[[y_pos,x_pos - 1]].block_set =
+                        Some(maze::items::item_library::get_random_room_block(true, 1, 4,rng));
+                    map.data[[y_pos,x_pos - 1]].chip_tile = true;
                 }
             }
 
-            if map.data[[y_pos,x_pos]].exit_right {
-                if map.data[[y_pos,x_pos + 1]].room_type == RoomType::Normal
-                    && map.data[[y_pos,x_pos + 1]].block_set.is_none()
-                {
-                    let chips = rng.gen_range(0..= 1); // Do I want chips;
-                    if chips == 0 {
-                        // No
-                        map.data[[y_pos,x_pos + 1]].block_set =
-                            Some(maze::items::item_library::get_random_room_block(false, 1, 3,rng));
-                        map.data[[y_pos,x_pos + 1]].chip_tile = false;
-                    } else {
-                        map.data[[y_pos,x_pos + 1]].block_set =
-                            Some(maze::items::item_library::get_random_room_block(true, 1, 3,rng));
-                        map.data[[y_pos,x_pos + 1]].chip_tile = true;
-                    }
+            if map.data[[y_pos,x_pos]].exit_right && map.data[[y_pos,x_pos + 1]].room_type == RoomType::Normal && map.data[[y_pos,x_pos + 1]].block_set.is_none() {
+                let chips = rng.gen_range(0..= 1); // Do I want chips;
+                if chips == 0 {
+                    // No
+                    map.data[[y_pos,x_pos + 1]].block_set =
+                        Some(maze::items::item_library::get_random_room_block(false, 1, 3,rng));
+                    map.data[[y_pos,x_pos + 1]].chip_tile = false;
+                } else {
+                    map.data[[y_pos,x_pos + 1]].block_set =
+                        Some(maze::items::item_library::get_random_room_block(true, 1, 3,rng));
+                    map.data[[y_pos,x_pos + 1]].chip_tile = true;
                 }
             }
         }
@@ -936,44 +912,28 @@ pub fn place_cardinal_directions(&self, map: &mut Map, rng: &mut ChaCha8Rng) {
         }
 
         for &(y_pos, x_pos) in &corridor {
-            if map.data[[y_pos,x_pos]].exit_up {
-                if map.data[[y_pos - 1,x_pos]].room_type == RoomType::Normal
-                    && map.data[[y_pos - 1,x_pos]].block_set.is_none()
-                {
-                    map.data[[y_pos - 1,x_pos]].block_set =
-                        Some(maze::items::item_library::get_random_room_block(false,2,2,rng));
-                    map.data[[y_pos - 1,x_pos]].chip_tile = false;
-                }
+            if map.data[[y_pos,x_pos]].exit_up && map.data[[y_pos - 1,x_pos]].room_type == RoomType::Normal && map.data[[y_pos - 1,x_pos]].block_set.is_none() {
+                map.data[[y_pos - 1,x_pos]].block_set =
+                    Some(maze::items::item_library::get_random_room_block(false,2,2,rng));
+                map.data[[y_pos - 1,x_pos]].chip_tile = false;
             }
 
-            if map.data[[y_pos,x_pos]].exit_down {
-                if map.data[[y_pos + 1,x_pos]].room_type == RoomType::Normal
-                    && map.data[[y_pos + 1,x_pos]].block_set.is_none()
-                {
-                    map.data[[y_pos + 1,x_pos]].block_set =
-                        Some(maze::items::item_library::get_random_room_block(false,2,1,rng));
-                    map.data[[y_pos + 1,x_pos]].chip_tile = false;
-                }
+            if map.data[[y_pos,x_pos]].exit_down && map.data[[y_pos + 1,x_pos]].room_type == RoomType::Normal && map.data[[y_pos + 1,x_pos]].block_set.is_none() {
+                map.data[[y_pos + 1,x_pos]].block_set =
+                    Some(maze::items::item_library::get_random_room_block(false,2,1,rng));
+                map.data[[y_pos + 1,x_pos]].chip_tile = false;
             }
 
-            if map.data[[y_pos,x_pos]].exit_left {
-                if map.data[[y_pos,x_pos - 1]].room_type == RoomType::Normal
-                    && map.data[[y_pos,x_pos - 1]].block_set.is_none()
-                {
-                    map.data[[y_pos,x_pos - 1]].block_set =
-                        Some(maze::items::item_library::get_random_room_block(false,2,4,rng));
-                    map.data[[y_pos,x_pos - 1]].chip_tile = false;
-                }
+            if map.data[[y_pos,x_pos]].exit_left && map.data[[y_pos,x_pos - 1]].room_type == RoomType::Normal && map.data[[y_pos,x_pos - 1]].block_set.is_none() {
+                map.data[[y_pos,x_pos - 1]].block_set =
+                    Some(maze::items::item_library::get_random_room_block(false,2,4,rng));
+                map.data[[y_pos,x_pos - 1]].chip_tile = false;
             }
 
-            if map.data[[y_pos,x_pos]].exit_right {
-                if map.data[[y_pos,x_pos + 1]].room_type == RoomType::Normal
-                    && map.data[[y_pos,x_pos + 1]].block_set.is_none()
-                {
-                    map.data[[y_pos,x_pos + 1]].block_set =
-                        Some(maze::items::item_library::get_random_room_block(false,2,3,rng));
-                    map.data[[y_pos,x_pos + 1]].chip_tile = false;
-                }
+            if map.data[[y_pos,x_pos]].exit_right && map.data[[y_pos,x_pos + 1]].room_type == RoomType::Normal && map.data[[y_pos,x_pos + 1]].block_set.is_none() {
+                map.data[[y_pos,x_pos + 1]].block_set =
+                    Some(maze::items::item_library::get_random_room_block(false,2,3,rng));
+                map.data[[y_pos,x_pos + 1]].chip_tile = false;
             }
         }
     }
@@ -1032,20 +992,12 @@ pub fn place_cardinal_directions(&self, map: &mut Map, rng: &mut ChaCha8Rng) {
             for x_pos in 0..24 {
                 if (map.data[[y_pos,x_pos]].area.unwrap() == area)
                     && (map.data[[y_pos,x_pos]].accessible)
-                    && map.data[[y_pos,x_pos]].block_set.is_none()
-                    && ((map.data[[y_pos,x_pos]].room_type == RoomType::Normal)
+                    && map.data[[y_pos,x_pos]].block_set.is_none() && ((map.data[[y_pos,x_pos]].room_type == RoomType::Normal)
                         || (area != 0
                             && allow_overwrite_entry
                             && map.data[[y_pos,x_pos]].room_type == RoomType::Save
-                            && map.data[[y_pos,x_pos]].starting_point))
-                {
-                    if !discard_special || !map.data[[y_pos,x_pos]].avoid_special {
-                        if area != 0 || !map.data[[y_pos,x_pos]].starting_point
-                        // in area 0 don't make any of the starting points miniboss rooms
-                        {
-                            suitable_rooms.push((y_pos, x_pos));
-                        }
-                    }
+                            && map.data[[y_pos,x_pos]].starting_point)) && (!discard_special || !map.data[[y_pos,x_pos]].avoid_special) && (area != 0 || !map.data[[y_pos,x_pos]].starting_point) {
+                    suitable_rooms.push((y_pos, x_pos));
                 }
             }
         }
@@ -1067,7 +1019,7 @@ pub fn place_cardinal_directions(&self, map: &mut Map, rng: &mut ChaCha8Rng) {
         for y_pos in 0..24 {
             for x_pos in 0..24 {
                 if (map.data[[y_pos,x_pos]].area.unwrap() == zone)
-                    && (map.data[[y_pos,x_pos]].accessible == true)
+                    && (map.data[[y_pos,x_pos]].accessible)
                 {
                     rooms_in_zone.push((y_pos, x_pos));
                 }
@@ -1102,27 +1054,27 @@ pub fn place_cardinal_directions(&self, map: &mut Map, rng: &mut ChaCha8Rng) {
 
             if portal_only {
                 let thisRoomType = &map.data[[y_pos,x_pos]].room_type;
-                let goodRooms = vec![RoomType::Save, RoomType::Corridor, RoomType::Text, RoomType::MultiShop, RoomType::SingleShop]; // i'll do good rooms only because it's possible I could add a room type
+                let goodRooms = [RoomType::Save, RoomType::Corridor, RoomType::Text, RoomType::MultiShop, RoomType::SingleShop]; // i'll do good rooms only because it's possible I could add a room type
 
                 if can_go_up {
                     let otherRoomType = &map.data[[y_pos - 1,x_pos]].room_type;
                     can_go_up =
-                        goodRooms.contains(&thisRoomType) || goodRooms.contains(&otherRoomType);
+                        goodRooms.contains(thisRoomType) || goodRooms.contains(otherRoomType);
                 }
                 if can_go_left {
                     let otherRoomType = &map.data[[y_pos,x_pos - 1]].room_type;
                     can_go_left =
-                        goodRooms.contains(&thisRoomType) || goodRooms.contains(&otherRoomType);
+                        goodRooms.contains(thisRoomType) || goodRooms.contains(otherRoomType);
                 }
                 if can_go_right {
                     let otherRoomType = &map.data[[y_pos,x_pos + 1]].room_type;
                     can_go_right =
-                        goodRooms.contains(&thisRoomType) || goodRooms.contains(&otherRoomType);
+                        goodRooms.contains(thisRoomType) || goodRooms.contains(otherRoomType);
                 }
                 if can_go_down {
                     let otherRoomType = &map.data[[y_pos + 1,x_pos]].room_type;
                     can_go_down =
-                        goodRooms.contains(&thisRoomType) || goodRooms.contains(&otherRoomType);
+                        goodRooms.contains(thisRoomType) || goodRooms.contains(otherRoomType);
                 }
             }
 

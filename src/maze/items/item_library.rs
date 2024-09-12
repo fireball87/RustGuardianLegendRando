@@ -121,28 +121,28 @@ pub(crate) fn get_random_room_block(
                 "6894", "3d94", "4694", "5094", "8794", "3f94", "8c94", "5d94", "5294", "e394",
                 "dd94", "df94", "d994", "d194", "d794", "d594",
             ];
-            return values[rng.gen_range(0..values.len())].to_string();
+            values[rng.gen_range(0..values.len())].to_string()
         }
         (true, 0, _) => {
             //	6f94 up arrow with back smashed and 2 unrevealed chips
             //	4194 right arrow with 2 blue chips cut out
             //	9d94 arrow pointing down with a bunch of unrevealed chips in it
             let values = ["6f94", "4194", "9d94"];
-            return values[rng.gen_range(0..values.len())].to_string();
+            values[rng.gen_range(0..values.len())].to_string()
         }
         (false, 1, 1) => "1c95".to_string(), //	1c95 a0 area transition going up with a bunch of extra red blocks
         (false, 1, 2) => {
             //	3c95 A0 area transition going down with 5 red blocks above
             //	4995 an area transition going down with 4 cut off blocks
             let values = ["3c95", "4995"];
-            return values[rng.gen_range(0..values.len())].to_string();
+            values[rng.gen_range(0..values.len())].to_string()
         }
         (false, 1, 3) => {
             //	e994 a0 area transition pattern going left
             //	f394 area transition going left with an upsidedown L cut out of it
             //	eb94 area transition going left with some blocks that are red
             let values = ["e994", "f394", "eb94"];
-            return values[rng.gen_range(0..values.len())].to_string();
+            values[rng.gen_range(0..values.len())].to_string()
         }
         (false, 1, 4) => "0895".to_string(), //	0895 a0 area transition going right with 2 extra red blocks
         (true, 1, 1) => {
@@ -150,44 +150,44 @@ pub(crate) fn get_random_room_block(
             //	2995 area transition up with 2 blue chips and some random holes
             //	2495 area transition up with a chip block in the center of the room
             let values = ["1795", "2995", "2495"];
-            return values[rng.gen_range(0..values.len())].to_string();
+            values[rng.gen_range(0..values.len())].to_string()
         }
         (true, 1, 2) => {
             //	3795 area transition down with a chip block in the middle
             //	4495 area transition down with a blue chip in the middle
             let values = ["4495", "3795"];
-            return values[rng.gen_range(0..values.len())].to_string();
+            values[rng.gen_range(0..values.len())].to_string()
         }
         (true, 1, 3) => "fb94".to_string(), //	fb94 area transition left with 4 chip tiles
         (true, 1, 4) => {
             //	0395 area transition right with some chips to pull up
             //	0d95 area transition to the right with 4 blue chips in the middle
             let values = ["0395", "0d95"];
-            return values[rng.gen_range(0..values.len())].to_string();
+            values[rng.gen_range(0..values.len())].to_string()
         }
         (false, 2, 1) => {
             //	7a95 corridor topper with up exit 6 point
             //	8595 corridor topper up with 8 point
             let values = ["7a95", "8595"];
-            return values[rng.gen_range(0..values.len())].to_string();
+            values[rng.gen_range(0..values.len())].to_string()
         }
         (false, 2, 2) => {
             //	9095 corridor topper with down exit 6 point
             //	9B95 corridor topper with down exit 8 point
             let values = ["9095", "9B95"];
-            return values[rng.gen_range(0..values.len())].to_string();
+            values[rng.gen_range(0..values.len())].to_string()
         }
         (false, 2, 3) => {
             //	4e95 corridor topper with left exit 6 point
             //	5995 corridor topper left with 8 4oint
             let values = ["4e95", "5995"];
-            return values[rng.gen_range(0..values.len())].to_string();
+            values[rng.gen_range(0..values.len())].to_string()
         }
         (false, 2, 4) => {
             //	6495 corridor topper with right exit 6 point
             //	6f95 corridor topper with right exit 8 point
             let values = ["6495", "6f95"];
-            return values[rng.gen_range(0..values.len())].to_string();
+            values[rng.gen_range(0..values.len())].to_string()
         }
         (true, 2, _) => {
             panic!("tried to place a chip decoration on a corridor, the game has none of those");
@@ -200,7 +200,7 @@ pub(crate) fn get_random_room_block(
 
 pub(crate) fn get_p_chip_room() -> String {
     //ea95 the p chip rooms
-    return "ea95".to_string();
+    "ea95".to_string()
 }
 
 pub(crate) fn get_cardinal_letter(letter: &str) -> String {

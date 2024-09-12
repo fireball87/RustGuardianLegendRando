@@ -381,14 +381,14 @@ impl Map {
                                 RoomType::MultiShop => {
                                     print!(
                                         "S{}",
-                                        hex::decode(&item.item_id.clone().unwrap()).unwrap()[0]
+                                        hex::decode(item.item_id.clone().unwrap()).unwrap()[0]
                                             - 0x3F
                                     )
                                 }
                                 RoomType::SingleShop => {
                                     print!(
                                         "s{}",
-                                        hex::decode(&item.item_id.clone().unwrap()).unwrap()[0]
+                                        hex::decode(item.item_id.clone().unwrap()).unwrap()[0]
                                             - 0x3A
                                     )
                                 }

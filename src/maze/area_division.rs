@@ -2,7 +2,7 @@ use rand::Rng;
 use rand_chacha::ChaCha8Rng;
 
 fn get_library_size() -> i32 {
-    return 1;
+    1
 }
 
 fn get_library_entry(item: i32) -> Vec<Vec<i32>> {

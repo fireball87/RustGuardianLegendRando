@@ -143,7 +143,7 @@ pub fn shuffle_skies(patcher: &mut Patcher, rng: &mut ChaCha8Rng) {
     for corridor in input_data {
         let mut input = corridor.data;
         let mut split = Vec::new();
-        while input.len() > 0 {
+        while !input.is_empty() {
             let mut length = 0;
             let first = &input[0..2];
             if &input[2..6] == "00" {

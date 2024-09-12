@@ -54,7 +54,7 @@ impl ItemGenerator {
 
         let pool_size = item_pool.len();
         for i in 20..=pool_size - (single_shops + multi_shops + 1) {
-            if !(i >= 30 && i < 52) {
+            if !(30..52).contains(&i) {
                 let area = rng.gen_range(0..=10);
                 item_library[area].push(format!("{:02X}", i - 19));
                 if log {
@@ -96,16 +96,16 @@ impl ItemGenerator {
             if log {
                 println!("corridor {} has {}", i + 1, item_pool[i]);
             }
-            patch_string.push_str(&*item_pool[i]);
+            patch_string.push_str(&item_pool[i]);
         }
-        patcher.add_change(&*patch_string, "1EF51");
+        patcher.add_change(&patch_string, "1EF51");
 
         let mut item_string = String::new();
 
         for i in 20..=pool_size - (single_shops + multi_shops + 1) {
-            item_string.push_str(&*item_pool[i]);
+            item_string.push_str(&item_pool[i]);
 
-            if i >= 30 && i < 52 {
+            if (30..52).contains(&i) {
                 if log {
                     println!("miniboss {:02X} has {}", i - 19, item_pool[i]);
                 }
@@ -119,7 +119,7 @@ impl ItemGenerator {
             }
         }
 
-        patcher.add_change(&*item_string, "16388");
+        patcher.add_change(&item_string, "16388");
 
         let mut patch_string = String::new();
         for i in pool_size - (single_shops + multi_shops + 1) + 1..=pool_size - (multi_shops + 1) {
@@ -130,13 +130,13 @@ impl ItemGenerator {
             let flipped_price = format!("{}{}", &price_hex[2..4], &price_hex[0..2]);
 
             patch_string.push_str(&flipped_price);
-            patch_string.push_str(&*item_pool[i]);
+            patch_string.push_str(&item_pool[i]);
             single_shop_library[0].push(format!("{:02X}", id));
             if log {
                 println!("small shop {:02X} has {}", id, item_pool[i]);
             }
         }
-        patcher.add_change(&*patch_string, "16077");
+        patcher.add_change(&patch_string, "16077");
 
         let mut patch_string = String::new();
         for i in pool_size - (multi_shops + 1) + 1..pool_size {
@@ -150,7 +150,7 @@ impl ItemGenerator {
             let rand_item0 = if rng.gen_range(0..=5) <= 2 { 12 } else { 11 };
 
             patch_string.push_str(&flipped_price);
-            patch_string.push_str(&*item_pool[i]);
+            patch_string.push_str(&item_pool[i]);
             patch_string.push_str(&format!("{:02X}", rand_item0));
             patch_string.push_str(&format!("{:02X}", rng.gen_range(0..=10)));
             multi_shop_library[desired_area].push(format!("{:02X}", id));
@@ -160,7 +160,7 @@ impl ItemGenerator {
             }
         }
 
-        patcher.add_change(&*patch_string, "1605e");
+        patcher.add_change(&patch_string, "1605e");
 
         (item_library, single_shop_library, multi_shop_library)
     }

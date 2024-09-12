@@ -2,7 +2,7 @@ use rand::prelude::SliceRandom;
 use rand::Rng;
 use rand_chacha::ChaCha8Rng;
 use crate::maze;
-use crate::maze::{area_division, items, map};
+use crate::maze::{area_division, items};
 use crate::maze::map::Map;
 use crate::maze::room::RoomType;
 
@@ -606,7 +606,7 @@ impl Generator {
         let mut locations = self.createListOfSuitableRooms(map, area, true, false);
 
         // place save room
-        if(area <= 1) {
+        if area <= 1 {
             if !locations.is_empty() {
                 let index = rng.gen_range(0..locations.len());
 
@@ -929,7 +929,7 @@ pub fn place_cardinal_directions(&self, map: &mut Map, rng: &mut ChaCha8Rng) {
         let mut corridor = vec![];
         for y_pos in 0..24 {
             for x_pos in 0..24 {
-                if (map.data[[y_pos,x_pos]].room_type == RoomType::Corridor) {
+                if map.data[[y_pos,x_pos]].room_type == RoomType::Corridor {
                     corridor.push((y_pos, x_pos));
                 }
             }

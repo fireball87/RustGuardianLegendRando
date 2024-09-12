@@ -1,6 +1,5 @@
 use rand::Rng;
 use rand_chacha::ChaCha8Rng;
-use crate::maze::map::Map;
 
 fn get_library_size() -> i32 {
     return 1;

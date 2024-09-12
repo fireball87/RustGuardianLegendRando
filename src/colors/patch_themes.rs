@@ -2,7 +2,6 @@ use crate::SaturationOptions;
 use rand::Rng;
 use rand_chacha::ChaCha8Rng;
 use crate::colors::patch_themes::ColorTheory::{Complementary, Monochrome, Triad};
-use crate::colors::patch_themes::ThemeSet::Vanilla;
 use crate::config::{ColorStrategy, Config, HueOptions};
 use crate::patcher::Patcher;
 
@@ -49,7 +48,7 @@ fn pick_level(level: &str, area:Vec<PatchSet>, rng: &mut ChaCha8Rng, patcher: &m
 
             }
             ColorStrategy::All(hue ) => {
-                let mut index = rng.gen_range(0..area.len());
+                let index = rng.gen_range(0..area.len());
                 let selected = &area[index];
                 patch_single_area(level,patcher,rng,selected,hue,cfg);
             }
@@ -62,7 +61,7 @@ fn pick_level(level: &str, area:Vec<PatchSet>, rng: &mut ChaCha8Rng, patcher: &m
             }
             ColorStrategy::ColorTheory(hue) => {
                 let filtered: Vec<&PatchSet> = area.iter().filter( |p| p.theme_set.iter().any(|a|matches!(a,ThemeSet::ColorTheory(_)))).collect();
-                let mut index = rng.gen_range(0..filtered.len());
+                let index = rng.gen_range(0..filtered.len());
                 let selected = filtered[index];
                 patch_single_area(level,patcher,rng,selected,hue, cfg);
             }
@@ -90,8 +89,8 @@ fn patch_single_area(level: &str, patcher: &mut Patcher,rng: &mut ChaCha8Rng, se
         }
     }
     let mut should_flip = false;
-    if(flip == 1 && flip_allowed){
-        if(!flip_safe || selected.saturation_flip_safe)
+    if flip == 1 && flip_allowed {
+        if !flip_safe || selected.saturation_flip_safe
         {
             should_flip = true;
         }
@@ -103,7 +102,7 @@ fn patch_single_area(level: &str, patcher: &mut Patcher,rng: &mut ChaCha8Rng, se
         false => {colorshift = "false".to_string()}
     }
     
-    if(cfg.log){
+    if cfg.log {
         println!("picked {} theme for area {} shifted {} flip:{}",selected.name,level,colorshift,should_flip)
     }
     
@@ -123,7 +122,7 @@ fn patch_single_area(level: &str, patcher: &mut Patcher,rng: &mut ChaCha8Rng, se
         
 
             
-        if(should_flip){
+        if should_flip {
             shifted = flip_all_saturation(&shifted);
         }
 

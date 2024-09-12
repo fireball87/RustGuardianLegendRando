@@ -14,9 +14,6 @@ use rand_seeder::Seeder;
 
 use crate::config::{BadIdeas, ColorStrategy, Config, CorridorConfig, HueOptions, QOLHacks, SaturationOptions};
 use crate::patcher::Patcher;
-use rand::{distributions::Alphanumeric, Rng};
-use crate::maze::map::Map;
-use crate::seed::make_seed;
 
 fn generate(patcher: &mut Patcher, cfg: &Config) {
     let mut rng: ChaCha8Rng = Seeder::from(&cfg.seed).make_rng();
@@ -44,7 +41,7 @@ fn generate(patcher: &mut Patcher, cfg: &Config) {
     );
     match map {
         Ok(map) => {
-            if(cfg.log)
+            if cfg.log
             {
                 map.draw_exits();
             }

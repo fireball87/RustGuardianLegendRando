@@ -414,13 +414,13 @@ impl Generator {
     ) {
         let mut locations = self.createListOfSuitableRooms(map, area, false, false);
 
-        let mut items_to_place = items_library[area as usize].clone();
+        let items_to_place = items_library[area as usize].clone();
 
         // minibosses are the same between secret and the normal items
 
         let minibosses_to_place = maze::items::item_library::get_miniboss(area);
 
-        let mut item_blocksets = maze::items::item_library::get_item_blocks();
+        let item_blocksets = maze::items::item_library::get_item_blocks();
 
         for item in &items_to_place {
             if !locations.is_empty() {
@@ -1102,7 +1102,7 @@ pub fn place_cardinal_directions(&self, map: &mut Map, rng: &mut ChaCha8Rng) {
 
             if portal_only {
                 let thisRoomType = &map.data[[y_pos,x_pos]].room_type;
-                let mut goodRooms = vec![RoomType::Save, RoomType::Corridor, RoomType::Text, RoomType::MultiShop, RoomType::SingleShop]; // i'll do good rooms only because it's possible I could add a room type
+                let goodRooms = vec![RoomType::Save, RoomType::Corridor, RoomType::Text, RoomType::MultiShop, RoomType::SingleShop]; // i'll do good rooms only because it's possible I could add a room type
 
                 if can_go_up {
                     let otherRoomType = &map.data[[y_pos - 1,x_pos]].room_type;

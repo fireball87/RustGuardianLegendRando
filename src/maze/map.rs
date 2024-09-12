@@ -12,7 +12,7 @@ pub struct Map {
 // 
 impl Map {
     pub fn new() -> Self {
-        let mut data: Array2<Room> = Array2::from_elem((24, 24), Room::default());
+        let data: Array2<Room> = Array2::from_elem((24, 24), Room::default());
         Map { data }
     }
 

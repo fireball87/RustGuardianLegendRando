@@ -1,3 +1,4 @@
+#[allow(dead_code)]
 #[derive(PartialEq, Eq)]
 pub enum ColorStrategy{
     Vanilla(HueOptions),
@@ -6,6 +7,7 @@ pub enum ColorStrategy{
     ColorTheory(HueOptions)
 }
 
+#[allow(dead_code)]
 #[derive(PartialEq, Eq)]
 pub enum SaturationOptions{
     None,
@@ -21,22 +23,20 @@ pub struct HueOptions {
 pub struct Config {
     pub(crate) corridor_config: CorridorConfig,
     pub(crate) qol_hacks: QOLHacks,
-    pub(crate) bad_ideas: BadIdeas,
+    // pub(crate) bad_ideas: BadIdeas,
     pub(crate) color_strategy: ColorStrategy,
     pub(crate) rebalance_bosses: bool,
     pub(crate) randomize_boss_health: bool,
-    pub(crate) secret: bool,
     pub(crate) log: bool,
     pub seed: String,
 }
 
-pub struct BadIdeas {
+/*pub struct BadIdeas {
     
-}
+}*/
 
 pub struct CorridorConfig {
     pub(crate) shuffle_skies: bool,
-    #[allow(dead_code)]
     pub(crate) shuffle_ground: bool,
     pub(crate) shuffle_corridors: bool,
     pub(crate) shuffle_bosses: bool,

@@ -147,8 +147,7 @@ fn flip_single_saturation(color: &str) -> String {
                 '1' => format!("{}{}", '2', c2),
                 '2' => format!("{}{}", '1', c2),
                 '3' => format!("{}{}", '0', c2),
-    
-                default => color.to_string()
+                _ => color.to_string()
             }
         }
         else { {

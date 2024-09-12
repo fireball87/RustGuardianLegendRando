@@ -1,45 +1,14 @@
 use rand::Rng;
 use rand_chacha::ChaCha8Rng;
 
-pub fn get_item_library() -> Vec<Vec<&'static str>> {
-    vec![
-        vec!["21", "05", "39", "35"],
-        vec!["24", "23", "26"],
-        vec!["36", "25"],
-        vec!["28", "27"],
-        vec!["29", "2A", "37"],
-        vec!["01", "2B", "2C"],
-        vec!["0A", "2D", "2E", "02"],
-        vec!["03", "2F", "30"],
-        vec!["31", "38", "04", "32"],
-        vec!["06", "33", "34", "08", "07"],
-        vec!["09"],
-    ]
-}
+
 
 pub fn get_item_blocks() -> Vec<&'static str> {
     vec!["AE94", "C994", "BE94", "B394"]
 }
 
-pub fn get_miniboss(area: i32) -> Vec<&'static str> {
-    match area {
-        0 => vec!["0B", "0C"],
-        1 => vec!["0D", "0E"],
-        2 => vec!["0F", "10"],
-        3 => vec!["12", "11"],
-        4 => vec!["13", "14"],
-        5 => vec!["15", "16"],
-        6 => vec!["17", "18"],
-        7 => vec!["19", "1A"],
-        8 => vec!["1B", "1C"],
-        9 => vec!["1D", "1E"],
-        10 => vec!["1F", "20"],
-        _ => {
-            let error = "Requested Invalid Area";
-            panic!("{}", error);
-        }
-    }
-}
+
+
 
 pub fn get_text_block(area: i32) -> Vec<&'static str> {
     match area {
@@ -59,37 +28,7 @@ pub fn get_text_block(area: i32) -> Vec<&'static str> {
     }
 }
 
-pub fn get_multi_shop_library() -> Vec<Vec<&'static str>> {
-    vec![
-        vec![],
-        vec![],
-        vec!["3F"],
-        vec![],
-        vec!["41"],
-        vec![],
-        vec!["42"],
-        vec!["40"],
-        vec![],
-        vec![],
-        vec!["43"],
-    ]
-}
 
-pub fn get_single_shop_library() -> Vec<Vec<&'static str>> {
-    vec![
-        vec!["3D", "3E", "3C", "3B", "3A"],
-        vec![],
-        vec![],
-        vec![],
-        vec![],
-        vec![],
-        vec![],
-        vec![],
-        vec![],
-        vec![],
-        vec![],
-    ]
-}
 
 //transitionType is 0 for none, 1 for area, 2 for corridor
 //direction is 1up, 2down, 3left, 4right
@@ -212,3 +151,132 @@ pub(crate) fn get_cardinal_letter(letter: &str) -> String {
         _ => panic!("don't request bad cardinal letters..."),
     }
 }
+
+pub fn get_miniboss(area: i32) -> Vec<&'static str> {
+    match area {
+        0 => vec!["0B", "0C"],
+        1 => vec!["0D", "0E"],
+        2 => vec!["0F", "10"],
+        3 => vec!["12", "11"],
+        4 => vec!["13", "14"],
+        5 => vec!["15", "16"],
+        6 => vec!["17", "18"],
+        7 => vec!["19", "1A"],
+        8 => vec!["1B", "1C"],
+        9 => vec!["1D", "1E"],
+        10 => vec!["1F", "20"],
+        _ => {
+            let error = "Requested Invalid Area";
+            panic!("{}", error);
+        }
+    }
+}
+
+// pub fn get_multi_shop_library() -> Vec<Vec<&'static str>> {
+//     vec![
+//         vec![],
+//         vec![],
+//         vec!["3F"],
+//         vec![],
+//         vec!["41"],
+//         vec![],
+//         vec!["42"],
+//         vec!["40"],
+//         vec![],
+//         vec![],
+//         vec!["43"],
+//     ]
+// }
+
+// pub fn get_single_shop_library() -> Vec<Vec<&'static str>> {
+//     vec![
+//         vec!["3D", "3E", "3C", "3B", "3A"],
+//         vec![],
+//         vec![],
+//         vec![],
+//         vec![],
+//         vec![],
+//         vec![],
+//         vec![],
+//         vec![],
+//         vec![],
+//         vec![],
+//     ]
+// }
+
+
+
+// pub fn get_item_library() -> Vec<Vec<&'static str>> {
+//     vec![
+//         vec!["21", "05", "39", "35"],
+//         vec!["24", "23", "26"],
+//         vec!["36", "25"],
+//         vec!["28", "27"],
+//         vec!["29", "2A", "37"],
+//         vec!["01", "2B", "2C"],
+//         vec!["0A", "2D", "2E", "02"],
+//         vec!["03", "2F", "30"],
+//         vec!["31", "38", "04", "32"],
+//         vec!["06", "33", "34", "08", "07"],
+//         vec!["09"],
+//     ]
+// }
+
+
+
+
+// fn get_secret_items(area: i32) -> Vec<&'static str> {
+//     match area {
+//         0 => vec!["35", "05", "00"],
+//         1 => vec!["39", "2b"],
+//         2 => vec!["07", "04", "38"],
+//         3 => vec!["32", "25", "24"],
+//         4 => vec!["09", "36"],
+//         5 => vec!["01", "23", "30"],
+//         6 => vec!["02", "34"],
+//         7 => vec!["2a", "06", "0a"],
+//         8 => vec!["2c", "33"],
+//         9 => vec!["2e", "26"],
+//         10 => vec!["22"],
+//         _ => panic!("Requested Invalid Area"),
+//     }
+// }
+// 
+// pub(crate) fn get_secret_text_block(area: i32) -> Vec<&'static str> {
+//     match area {
+//         0 => vec!["01", "02", "03"], //removed "00" because we'll place it manually earlier
+//         1 => vec![],
+//         2 => vec!["0f"],
+//         3 => vec!["10"],
+//         4 => vec![], //text 12 will be generated with c4
+//         5 => vec!["13"],
+//         6 => vec!["0e"],
+//         7 => vec!["0c"],
+//         8 => vec!["0d"],
+//         9 => vec!["14"],
+//         10 => vec!["11"],
+//         _ => panic!("Requested Invalid Area"),
+//     }
+// }
+// 
+// fn get_secret_multi_shop(area: i32) -> Vec<&'static str> {
+//     match area {
+//         2 => vec!["3f"],
+//         3 => vec!["40"],
+//         5 => vec!["41"],
+//         6 => vec!["42"],
+//         10 => vec!["43"],
+//         0 | 1 | 4 | 7 | 8 | 9 => vec![],
+//         _ => panic!("Requested Invalid Area"),
+//     }
+// }
+// 
+// fn get_secret_single_shop(area: i32) -> Vec<&'static str> {
+//     match area {
+//         0 => vec!["3d", "3a", "3b"],
+//         2 => vec!["3c"],
+//         4 => vec!["3e"],
+//         1 | 3 | 5 | 6 | 7 | 8 | 9 | 10 => vec![],
+//         _ => panic!("Requested Invalid Area"),
+//     }
+// }

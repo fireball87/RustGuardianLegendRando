@@ -12,7 +12,7 @@ mod seed;
 use rand_chacha::ChaCha8Rng;
 use rand_seeder::Seeder;
 
-use crate::config::{BadIdeas, ColorStrategy, Config, CorridorConfig, HueOptions, QOLHacks, SaturationOptions};
+use crate::config::{ColorStrategy, Config, CorridorConfig, HueOptions, QOLHacks, SaturationOptions};
 use crate::patcher::Patcher;
 
 fn generate(patcher: &mut Patcher, cfg: &Config) {
@@ -27,7 +27,6 @@ fn generate(patcher: &mut Patcher, cfg: &Config) {
         items.0,
         items.1,
         items.2,
-        cfg.secret,
         18,
         25,
         3,
@@ -62,7 +61,6 @@ fn generate(patcher: &mut Patcher, cfg: &Config) {
 
 fn main() {
     let writefiles = true;
-    let secret = false;
 
     let mut patcher = Patcher::new();
 
@@ -79,8 +77,7 @@ fn main() {
         enemy_erasers_unlocked_from_start: true,
         remove_flash: true,
     };
-    let bad_ideas = BadIdeas {
-    };
+
 
 
 
@@ -91,11 +88,9 @@ fn main() {
     let cfg = Config {
         corridor_config,
         qol_hacks,
-        bad_ideas,
         color_strategy: ColorStrategy::ColorTheory(hue_options),
         rebalance_bosses: true,
         randomize_boss_health: true,
-        secret,
         log: true,
         seed: rng_seed,
     };
@@ -105,16 +100,12 @@ fn main() {
 
 
     if writefiles {
-        let rawdata = if secret {
-            std::fs::read("./sourceroms/secret4rando.nes").unwrap()
-        } else {
-            std::fs::read("./sourceroms/tgl.nes").unwrap()
-        };
+        let rawdata = std::fs::read("./sourceroms/tgl.nes").unwrap();
 
         let rom = hex::encode(rawdata);
         //println!("ROM data: {}", rom);
 
-        let filetag = if secret { "SECRET" } else { "TGL" };
+        let filetag =   "TGL" ;
 
         let rom_filename = "./output/1brokian.nes";
         let rom_filename2 = format!("./output/{}-{}-{}.nes", filetag, chrono::Local::now().format("%Y-%m-%d"), cfg.seed);
@@ -171,7 +162,6 @@ mod tests {
             qol_hacks,
             rebalance_bosses: true,
             randomize_boss_health: true,
-            secret: false,
             log: true,
             seed: "TestSeed".to_string(),
         };
@@ -213,7 +203,6 @@ mod tests {
                 qol_hacks,
                 rebalance_bosses: true,
                 randomize_boss_health: true,
-                secret: false,
                 log: false,
                 seed: rand::thread_rng()
                     .sample_iter(&Alphanumeric)

@@ -3,7 +3,7 @@ use rand_chacha::ChaCha8Rng;
 use crate::config::Config;
 use crate::Patcher;
 
-pub fn shuffle_minibosses(patcher: &mut Patcher, config: &Config, rng: &mut ChaCha8Rng) {
+pub fn shuffle_minibosses(patcher: &mut Patcher, _config: &Config, rng: &mut ChaCha8Rng) {
     // 22 minibosses
     // 3 * a number between 0 and 11, 12 if allow_missingno
     let allow_missingno = false;

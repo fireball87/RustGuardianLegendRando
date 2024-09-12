@@ -1,7 +1,5 @@
 use crate::maze::room::{Room, RoomType};
 use ndarray::Array2;
-use rand::Rng;
-use rand_chacha::ChaCha8Rng;
 
 pub struct Map {
     // The map is an array of Room objects
@@ -18,8 +16,8 @@ impl Map {
 
     pub fn write_hex(&self, log: bool) -> String {
         let mut final_hex = String::new();
-        for (y_pos, row) in self.data.outer_iter().enumerate() {
-            for (x_pos, item) in row.iter().enumerate() {
+        for (_y_pos, row) in self.data.outer_iter().enumerate() {
+            for (_x_pos, item) in row.iter().enumerate() {
                 if !item.accessible {
                     final_hex += "80";
                     //break 1;
@@ -44,7 +42,6 @@ impl Map {
                     if item.exit_up {
                         direction_bit += 8;
                     }
-                    direction_bit;
 
                     let area = item.area.unwrap();
 
@@ -260,66 +257,7 @@ impl Map {
             }
         }
     }
-
-    fn pick_random_enemy(&self, rng: &mut ChaCha8Rng) -> String {
-        let enemy = rng.gen_range(0..=41);
-        let enstring = format!("{:02X}", enemy);
-        if enstring.len() == 1 {
-            format!("0{}", enstring)
-        } else {
-            enstring
-        }
-
-        //enemy table
-        //01 blue bubble
-        ////02 red carpet
-        ////03 red carpet and blue bubble
-        ////04 yellow ball
-        ////05 yellow ball and red and blue hockey pucks
-        ////06 red and blue hockey pucks
-        ////07 red and blue spiders
-        ////08 those tall alien dudes
-        ////09 5 yellow bats
-        ////0A blue and green balls
-        ////0B red and orange balls
-        ////0C yellow bats and red hockey pucks
-        ////0D single carrot
-        ////0E Blue balls and red spiders
-        ////0F Transformers and red carpet
-        ////10 3 yellow bats
-        ////11 multiplication spider
-        ////12 1 carrot and 2 tall alien transformer dudes
-        ////13 red carpets and 2 blue spinny flowers
-        ////14 those tall pointy hermet crab things
-        ////15 2 carrots
-        ////16 4 bats 3 hermet crabs
-        ////17 3 hermet crabs 2 green balls
-        ////18 2 red balls
-        ////19 1 ice cube a bunch of blue spinny flowers
-        ////1A bunch of red small spiders
-        ////1B bunch of multiplication ice cubes
-        ////1C 2 multiplication ice cubes
-        ////1D balls of every color
-        ////1E 2 vertical worm things
-        ////1F 2 small blue spinny flowers
-        ////20 4 yellow bats
-        ////21 4 carrots
-        ////22 red and blue  hockey pucks, and 2 tall transformer aliens
-        ////23 2 big boss spiders
-        ////24 a couple spinny flowers, a couple blue hockey pucks
-        ////25 bats and spinnys
-        ////26 red carpets again
-        ////27 bubble dropping robot
-        ////28 falling moons
-        ////29 bunch of green balls
-        ////2A bunch of balls of every color
-        ////2B bubble dropping robots except now there's 2 of them
-        ////2C vertical worms and red hockey pucks
-        ////2D falling moons and red carpets
-        ////2E falling moons and one blue spider boss
-        ////2F one red spider boss and 2 blue spinnies
-    }
-
+    
     fn print_areas(&self) {
         for row in self.data.rows() {
             for item in row.iter() {

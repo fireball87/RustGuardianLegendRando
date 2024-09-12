@@ -22,7 +22,6 @@ impl Generator {
         item_library: Vec<Vec<String>>,
         small_shop_library: Vec<Vec<String>>,
         multi_shop_library: Vec<Vec<String>>,
-        secret: bool,
         min_area_size: usize,
         max_area_size: usize,
         desired_connections: i32,
@@ -45,15 +44,15 @@ impl Generator {
 
         self.shuffle_areas(rng, &mut map);
 
-        self.growA0ring(&mut map); // i need to place cardinal directions before mapping the starting points, because the starting points will grow out a0 and break the calculation
+        self.grow_a0_ring(&mut map); // i need to place cardinal directions before mapping the starting points, because the starting points will grow out a0 and break the calculation
         self.place_cardinal_directions(&mut map,rng);
 
         self.find_starting_points(&mut map, rng);
 
         for i in 1..=10 {
             self.grow_zone(i, rng.gen_range(min_area_size..= max_area_size), &mut map,rng);
-            self.addConnections(&mut map, i, desired_connections, false, false, rng);
-            self.addConnections(
+            self.add_connections(&mut map, i, desired_connections, false, false, rng);
+            self.add_connections(
                 &mut map,
                 i,
                 desired_one_way_connections,
@@ -63,8 +62,8 @@ impl Generator {
             );
         }
         self.grow_zone(0, 50, &mut map, rng);
-        self.addConnections(&mut map, 0, desired_connections, false, false, rng);
-        self.addConnections(
+        self.add_connections(&mut map, 0, desired_connections, false, false, rng);
+        self.add_connections(
             &mut map,
             0,
             desired_one_way_connections,
@@ -73,24 +72,24 @@ impl Generator {
             rng
         );
 
-        self.placestarting_pointRooms(&mut map);
-        self.placeAreaDecorations(&mut map, rng);
+        self.placestarting_point_rooms(&mut map);
+        self.place_area_decorations(&mut map, rng);
 
-        self.placeStartingTextRoom(&mut map);
+        self.place_starting_text_room(&mut map);
         
         
         // place all my items
         for i in 0..=10 {
-            self.placeImportantRooms(&mut map, small_shop_library.clone(), multi_shop_library.clone(), i, secret, rng);
-            self.placeItemsAndMinibosses(&mut map, item_library.clone(), i, secret, rng);
-            self.placeNonImportantRooms(&mut map, i, secret, rng);
+            self.place_important_rooms(&mut map, small_shop_library.clone(), multi_shop_library.clone(), i, rng);
+            self.place_items_and_minibosses(&mut map, item_library.clone(), i, rng);
+            self.place_non_important_rooms(&mut map, i, rng);
         }
         
-        self.placeCorridorDecorations(&mut map, rng);
-        self.placeRandomDecorations(&mut map, decoration_odds, chip_odds, rng);
+        self.place_corridor_decorations(&mut map, rng);
+        self.place_random_decorations(&mut map, decoration_odds, chip_odds, rng);
 
-        self.populateEnemies(&mut map, empty_room_odds, rng);
-        let bytes = self.countAllRoomBytes(&map);
+        self.populate_enemies(&mut map, empty_room_odds, rng);
+        let bytes = self.count_all_room_bytes(&map);
         if log {
             println!("{}", bytes);
         }
@@ -102,7 +101,7 @@ impl Generator {
 
     }
 
-    fn countAllRoomBytes(&self, map: &Map) -> i32 {
+    fn count_all_room_bytes(&self, map: &Map) -> i32 {
         let mut total = 0;
         for y_pos in 0..24 {
             for x_pos in 0..24 {
@@ -336,7 +335,7 @@ impl Generator {
             }
         }
     }
-    fn growA0ring(&self, map: &mut Map) {
+    fn grow_a0_ring(&self, map: &mut Map) {
         // form the outside ring
         for y_pos in 0..24 {
             for x_pos in 0..24 {
@@ -403,16 +402,15 @@ impl Generator {
         }
     }
 
-    fn placeItemsAndMinibosses(
+    fn place_items_and_minibosses(
         &self,
         map: &mut Map,
         items_library: Vec<Vec<String>>,
         area: i32,
-        secret: bool,
         rng: &mut ChaCha8Rng
 
     ) {
-        let mut locations = self.createListOfSuitableRooms(map, area, false, false);
+        let mut locations = self.create_list_of_suitable_rooms(map, area, false, false);
 
         let items_to_place = items_library[area as usize].clone();
 
@@ -454,115 +452,31 @@ impl Generator {
         }
     }
 
-    fn placeStartingTextRoom(&self, map: &mut Map) {
+    fn place_starting_text_room(&self, map: &mut Map) {
         let y_pos = 12;
         let x_pos = 11;
         map.data[[y_pos,x_pos]].room_type = RoomType::Text;
         map.data[[y_pos,x_pos]].item_id = Some("00".to_string());
     }
 // 
-    fn placeImportantRooms(
+    fn place_important_rooms(
         &self,
         map: &mut Map,
         single_shop_library: Vec<Vec<String>>,
         multi_shop_library: Vec<Vec<String>>,
         area: i32,
-        secret: bool,
         rng: &mut ChaCha8Rng
     ) {
-        let mut locations = self.createListOfSuitableRooms(map, area, true, false);
+        let mut locations = self.create_list_of_suitable_rooms(map, area, true, false);
 
         // place corridors
         if area == 0 {
-            self.placeCorridor(21, &mut locations, map,rng);
+            self.place_corridor(21, &mut locations, map, rng);
         } else if area == 1 {
-            self.placeCorridor(11, &mut locations, map,rng);
-        } else if secret && area == 4 && false {
-            // find a sutable c4 location
-            let mut array_copy = locations.clone(); // this actually copies the array
-            array_copy.shuffle(rng);
-            let mut foundRoom = false;
-            for item in &array_copy {
-                // check the rooms if it is possible
-                // [4][1]
-                // [5][2][0]
-                // 7
-
-                // check that the rooms fit on the map
-                if (item.0 > 0) && (item.0 < 23) && (item.1 - 2 > 0) {
-                    // if the room can be placed in space check All the rooms
-
-                    let rooms = vec![
-                        *item,
-                        (item.0 - 1, item.1 - 1),
-                        (item.0, item.1 - 1),
-                        (item.0 + 1, item.1 - 1),
-                        (item.0 - 1, item.1 - 2),
-                        (item.0, item.1 - 2),
-                    ];
-                    let mut working_roomset = true;
-
-                    for room in &rooms {
-                        if map.data[[room.0,room.1]].area.unwrap() != 4
-                            || map.data[[room.0,room.1]].room_type != RoomType::Normal
-                        {
-                            working_roomset = false;
-                            break;
-                        }
-                    }
-
-                    if working_roomset {
-                        foundRoom = true;
-                        for room in &rooms {
-                            map.data[[room.0,room.1]].accessible = true;
-                            map.data[[room.0,room.1]].avoid_special = true;
-                        }
-
-                        // place the text room in map tile marked 0
-                        map.data[[item.0,item.1]].exit_left = true;
-                        map.data[[item.0,item.1]].room_type = RoomType::Text;
-                        map.data[[item.0,item.1]].item_id = Some("12".to_string());
-
-                        // place the corridor in map tile marked 2
-                        map.data[[item.0,item.1 - 1]].exit_left = true;
-                        map.data[[item.0,item.1 - 1]].exit_right = true;
-                        map.data[[item.0,item.1 - 1]].exit_up = true;
-                        map.data[[item.0,item.1 - 1]].exit_down = true;
-                        map.data[[item.0,item.1 - 1]].room_type = RoomType::Corridor;
-                        map.data[[item.0,item.1 - 1]].enemy_type = 4;
-
-                        // exits for 1
-                        map.data[[item.0 - 1,item.1 - 1]].exit_left = true;
-                        map.data[[item.0 - 1,item.1 - 1]].exit_down = true;
-                        // exits for 3
-                        map.data[[item.0 + 1,item.1 - 1]].exit_up = true;
-                        // exits for 4
-                        map.data[[item.0 - 1,item.1 - 2]].exit_down = true;
-                        map.data[[item.0 - 1,item.1 - 2]].exit_right = true;
-
-                        // exits for 5
-                        map.data[[item.0,item.1 - 2]].exit_up = true;
-                        map.data[[item.0,item.1 - 2]].exit_right = true;
-
-                        // remove all rooms from rooms array
-
-                        for room in &rooms {
-                            if let Some(index) = locations.iter().position(|&r| r == *room) {
-                                locations.remove(index);
-                            }
-                        }
-
-                        break;
-                    }
-                }
-            }
-
-            if !foundRoom {
-                panic!("could not place secret C4");
-            }
+            self.place_corridor(11, &mut locations, map, rng);
         } else {
-            self.placeCorridor(area, &mut locations, map,rng);
-            self.placeCorridor(area + 10, &mut locations, map,rng);
+            self.place_corridor(area, &mut locations, map, rng);
+            self.place_corridor(area + 10, &mut locations, map, rng);
         }
 
         // place single shops
@@ -602,8 +516,8 @@ impl Generator {
         }
     }
 
-    fn placeNonImportantRooms(&self, map: &mut Map, area: i32, secret: bool, rng: &mut ChaCha8Rng) {
-        let mut locations = self.createListOfSuitableRooms(map, area, true, false);
+    fn place_non_important_rooms(&self, map: &mut Map, area: i32, rng: &mut ChaCha8Rng) {
+        let mut locations = self.create_list_of_suitable_rooms(map, area, true, false);
 
         // place save room
         if area <= 1 {
@@ -621,11 +535,8 @@ impl Generator {
         }
 
         // place text rooms
-        let textrooms = if secret {
-            items::secret_library::get_text_block(area)
-        } else {
-            items::item_library::get_text_block(area)
-        };
+        let textrooms = items::item_library::get_text_block(area);
+        
 
         for item in &textrooms {
             if !locations.is_empty() {
@@ -776,7 +687,7 @@ pub fn place_cardinal_directions(&self, map: &mut Map, rng: &mut ChaCha8Rng) {
 
 
 
-    fn placeCorridor(
+    fn place_corridor(
         &self,
         corridor_id: i32,
         locations: &mut Vec<(usize, usize)>,
@@ -797,7 +708,7 @@ pub fn place_cardinal_directions(&self, map: &mut Map, rng: &mut ChaCha8Rng) {
         }
     }
 
-    fn placestarting_pointRooms(&self, map: &mut Map) {
+    fn placestarting_point_rooms(&self, map: &mut Map) {
         for y_pos in 0..24 {
             for x_pos in 0..24 {
                 if (map.data[[y_pos,x_pos]].area.unwrap() >= 1 && map.data[[y_pos,x_pos]].area.unwrap() <= 10)
@@ -814,7 +725,7 @@ pub fn place_cardinal_directions(&self, map: &mut Map, rng: &mut ChaCha8Rng) {
         }
      }
 
-    fn populateEnemies(&self, map: &mut Map, empty_room_odds: u8, rng: &mut ChaCha8Rng) {
+    fn populate_enemies(&self, map: &mut Map, empty_room_odds: u8, rng: &mut ChaCha8Rng) {
         for y_pos in 0..24 {
             for x_pos in 0..24 {
                 if map.data[[y_pos,x_pos]].accessible
@@ -830,9 +741,61 @@ pub fn place_cardinal_directions(&self, map: &mut Map, rng: &mut ChaCha8Rng) {
                 }
             }
         }
+        
+
+            //enemy table
+            //01 blue bubble
+            ////02 red carpet
+            ////03 red carpet and blue bubble
+            ////04 yellow ball
+            ////05 yellow ball and red and blue hockey pucks
+            ////06 red and blue hockey pucks
+            ////07 red and blue spiders
+            ////08 those tall alien dudes
+            ////09 5 yellow bats
+            ////0A blue and green balls
+            ////0B red and orange balls
+            ////0C yellow bats and red hockey pucks
+            ////0D single carrot
+            ////0E Blue balls and red spiders
+            ////0F Transformers and red carpet
+            ////10 3 yellow bats
+            ////11 multiplication spider
+            ////12 1 carrot and 2 tall alien transformer dudes
+            ////13 red carpets and 2 blue spinny flowers
+            ////14 those tall pointy hermet crab things
+            ////15 2 carrots
+            ////16 4 bats 3 hermet crabs
+            ////17 3 hermet crabs 2 green balls
+            ////18 2 red balls
+            ////19 1 ice cube a bunch of blue spinny flowers
+            ////1A bunch of red small spiders
+            ////1B bunch of multiplication ice cubes
+            ////1C 2 multiplication ice cubes
+            ////1D balls of every color
+            ////1E 2 vertical worm things
+            ////1F 2 small blue spinny flowers
+            ////20 4 yellow bats
+            ////21 4 carrots
+            ////22 red and blue  hockey pucks, and 2 tall transformer aliens
+            ////23 2 big boss spiders
+            ////24 a couple spinny flowers, a couple blue hockey pucks
+            ////25 bats and spinnys
+            ////26 red carpets again
+            ////27 bubble dropping robot
+            ////28 falling moons
+            ////29 bunch of green balls
+            ////2A bunch of balls of every color
+            ////2B bubble dropping robots except now there's 2 of them
+            ////2C vertical worms and red hockey pucks
+            ////2D falling moons and red carpets
+            ////2E falling moons and one blue spider boss
+            ////2F one red spider boss and 2 blue spinnies
+        
+
     }
 
-    fn placeAreaDecorations(&self, map: &mut Map, rng: &mut ChaCha8Rng) {
+    fn place_area_decorations(&self, map: &mut Map, rng: &mut ChaCha8Rng) {
         let mut starting_rooms = vec![];
         for y_pos in 0..24 {
             for x_pos in 0..24 {
@@ -901,7 +864,7 @@ pub fn place_cardinal_directions(&self, map: &mut Map, rng: &mut ChaCha8Rng) {
         }
     }
 
-    fn placeCorridorDecorations(&self, map: &mut Map, rng: &mut ChaCha8Rng) {
+    fn place_corridor_decorations(&self, map: &mut Map, rng: &mut ChaCha8Rng) {
         let mut corridor = vec![];
         for y_pos in 0..24 {
             for x_pos in 0..24 {
@@ -938,7 +901,7 @@ pub fn place_cardinal_directions(&self, map: &mut Map, rng: &mut ChaCha8Rng) {
         }
     }
 
-    fn placeRandomDecorations(&self, map: &mut Map, decoration_odds: u8, chip_odds: u8, rng: &mut ChaCha8Rng) {
+    fn place_random_decorations(&self, map: &mut Map, decoration_odds: u8, chip_odds: u8, rng: &mut ChaCha8Rng) {
         for y_pos in 0..24 {
             for x_pos in 0..24 {
                 if (map.data[[y_pos,x_pos]].accessible && (map.data[[y_pos,x_pos]].room_type == RoomType::Normal))
@@ -979,7 +942,7 @@ pub fn place_cardinal_directions(&self, map: &mut Map, rng: &mut ChaCha8Rng) {
         }
     }
 
-    fn createListOfSuitableRooms(
+    fn create_list_of_suitable_rooms(
         &self,
         map: &Map,
         area: i32,
@@ -1004,7 +967,7 @@ pub fn place_cardinal_directions(&self, map: &mut Map, rng: &mut ChaCha8Rng) {
         suitable_rooms
     }
 
-    fn addConnections(
+    fn add_connections(
         &self,
         map: &mut Map,
         zone: i32,
@@ -1053,28 +1016,28 @@ pub fn place_cardinal_directions(&self, map: &mut Map, rng: &mut ChaCha8Rng) {
                 && !map.data[[y_pos,x_pos]].exit_down;
 
             if portal_only {
-                let thisRoomType = &map.data[[y_pos,x_pos]].room_type;
-                let goodRooms = [RoomType::Save, RoomType::Corridor, RoomType::Text, RoomType::MultiShop, RoomType::SingleShop]; // i'll do good rooms only because it's possible I could add a room type
+                let this_room_type = &map.data[[y_pos,x_pos]].room_type;
+                let good_rooms = [RoomType::Save, RoomType::Corridor, RoomType::Text, RoomType::MultiShop, RoomType::SingleShop]; // i'll do good rooms only because it's possible I could add a room type
 
                 if can_go_up {
-                    let otherRoomType = &map.data[[y_pos - 1,x_pos]].room_type;
+                    let other_room_typee = &map.data[[y_pos - 1,x_pos]].room_type;
                     can_go_up =
-                        goodRooms.contains(thisRoomType) || goodRooms.contains(otherRoomType);
+                        good_rooms.contains(this_room_type) || good_rooms.contains(other_room_typee);
                 }
                 if can_go_left {
-                    let otherRoomType = &map.data[[y_pos,x_pos - 1]].room_type;
+                    let other_room_typee = &map.data[[y_pos,x_pos - 1]].room_type;
                     can_go_left =
-                        goodRooms.contains(thisRoomType) || goodRooms.contains(otherRoomType);
+                        good_rooms.contains(this_room_type) || good_rooms.contains(other_room_typee);
                 }
                 if can_go_right {
-                    let otherRoomType = &map.data[[y_pos,x_pos + 1]].room_type;
+                    let other_room_typee = &map.data[[y_pos,x_pos + 1]].room_type;
                     can_go_right =
-                        goodRooms.contains(thisRoomType) || goodRooms.contains(otherRoomType);
+                        good_rooms.contains(this_room_type) || good_rooms.contains(other_room_typee);
                 }
                 if can_go_down {
-                    let otherRoomType = &map.data[[y_pos + 1,x_pos]].room_type;
+                    let other_room_type = &map.data[[y_pos + 1,x_pos]].room_type;
                     can_go_down =
-                        goodRooms.contains(thisRoomType) || goodRooms.contains(otherRoomType);
+                        good_rooms.contains(this_room_type) || good_rooms.contains(other_room_type);
                 }
             }
 

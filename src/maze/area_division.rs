@@ -90,8 +90,7 @@ fn get_library_entry(item: i32) -> Vec<Vec<i32>> {
     }
 }
 
-
-pub fn get_sub_division(rng: &mut ChaCha8Rng) -> Vec<Vec<i32>>{
+pub fn get_sub_division(rng: &mut ChaCha8Rng) -> Vec<Vec<i32>> {
     // select from a template
 
     let mut template = get_library_entry(rng.gen_range(0..get_library_size()));
@@ -100,13 +99,13 @@ pub fn get_sub_division(rng: &mut ChaCha8Rng) -> Vec<Vec<i32>>{
     if should_flip == 1 {
         flip_horizontally_in_place(&mut template);
     }
-    
+
     let rotate_times = rng.gen_range(0..=3);
-    
+
     for _n in 0..=rotate_times {
         rotate_90_degrees(&mut template);
     }
-    
+
     template
 }
 

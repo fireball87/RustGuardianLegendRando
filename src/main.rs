@@ -1,3 +1,4 @@
+mod colors;
 mod config;
 mod corridor;
 mod helpers;
@@ -6,57 +7,44 @@ mod maze;
 mod patcher;
 mod qol_hacks;
 mod rebalance;
-mod colors;
 mod seed;
 
 use rand_chacha::ChaCha8Rng;
 use rand_seeder::Seeder;
 
-use crate::config::{ColorStrategy, Config, CorridorConfig, HueOptions, QOLHacks, SaturationOptions};
+use crate::config::{
+    ColorStrategy, Config, CorridorConfig, HueOptions, QOLHacks, SaturationOptions,
+};
 use crate::patcher::Patcher;
 
 fn generate(patcher: &mut Patcher, cfg: &Config) {
     let mut rng: ChaCha8Rng = Seeder::from(&cfg.seed).make_rng();
     corridor::shuffle_corridor_components(patcher, cfg, &mut rng);
     rebalance::handle_rebalance(patcher, cfg, &mut rng);
-    maze::shuffle_minibosses::shuffle_minibosses(patcher,cfg, &mut rng);
-    let items = maze::items::item_generator::ItemGenerator::prepare_items(patcher, 5, 5, 4, 9, 10, 6, true, 5, 5, 3, 5, cfg.log, &mut rng);
-    
-    
+    maze::shuffle_minibosses::shuffle_minibosses(patcher, cfg, &mut rng);
+    let items = maze::items::item_generator::ItemGenerator::prepare_items(
+        patcher, 5, 5, 4, 9, 10, 6, true, 5, 5, 3, 5, cfg.log, &mut rng,
+    );
+
     let map = maze::generator::Generator.run(
-        items.0,
-        items.1,
-        items.2,
-        18,
-        25,
-        3,
-        0,
-        false,
-        6,
-        3,
-        10,
-        cfg.log,
-        &mut rng
+        items.0, items.1, items.2, 18, 25, 3, 0, false, 6, 3, 10, cfg.log, &mut rng,
     );
     match map {
         Ok(map) => {
-            if cfg.log
-            {
+            if cfg.log {
                 map.draw_exits();
             }
             let maphex = map.write_hex(cfg.log);
             patcher.add_change(&maphex, "14A7E");
         }
         Err(e) => {
-            panic!("{}",e);
+            panic!("{}", e);
         }
     }
-    
-    colors::patch_themes::patch_all(cfg,patcher,&mut Seeder::from(&cfg.seed).make_rng());
-    
+
+    colors::patch_themes::patch_all(cfg, patcher, &mut Seeder::from(&cfg.seed).make_rng());
 
     qol_hacks::handle_qol_hacks(patcher, cfg);
-
 }
 
 fn main() {
@@ -78,13 +66,12 @@ fn main() {
         remove_flash: true,
     };
 
-
-
-
     let rng_seed = seed::make_seed();
 
-
-    let hue_options  = HueOptions{rotate_hue: true, flip_saturation: SaturationOptions::Safe};
+    let hue_options = HueOptions {
+        rotate_hue: true,
+        flip_saturation: SaturationOptions::Safe,
+    };
     let cfg = Config {
         corridor_config,
         qol_hacks,
@@ -96,8 +83,7 @@ fn main() {
     };
 
     generate(&mut patcher, &cfg);
-    seed::write_seed(&mut patcher,&cfg);
-
+    seed::write_seed(&mut patcher, &cfg);
 
     if writefiles {
         let rawdata = std::fs::read("./sourceroms/tgl.nes").unwrap();
@@ -105,10 +91,15 @@ fn main() {
         let rom = hex::encode(rawdata);
         //println!("ROM data: {}", rom);
 
-        let filetag =   "TGL" ;
+        let filetag = "TGL";
 
         let rom_filename = "./output/1brokian.nes";
-        let rom_filename2 = format!("./output/{}-{}-{}.nes", filetag, chrono::Local::now().format("%Y-%m-%d"), cfg.seed);
+        let rom_filename2 = format!(
+            "./output/{}-{}-{}.nes",
+            filetag,
+            chrono::Local::now().format("%Y-%m-%d"),
+            cfg.seed
+        );
 
         patcher.write_rom(rom_filename, &rom);
         patcher.write_rom(&rom_filename2, &rom);
@@ -182,8 +173,7 @@ mod tests {
 
     fn test_100_generations() {
         use super::*;
-        for i in 0..1000
-        {
+        for i in 0..1000 {
             let corridor_config = CorridorConfig {
                 shuffle_skies: true,
                 shuffle_ground: true,
@@ -197,7 +187,7 @@ mod tests {
                 enemy_erasers_unlocked_from_start: true,
                 remove_flash: true,
             };
-            
+
             let cfg = Config {
                 corridor_config,
                 qol_hacks,
@@ -213,8 +203,7 @@ mod tests {
             let mut p1 = Patcher::new();
 
             generate(&mut p1, &cfg);
-            print!("{}",i);
+            print!("{}", i);
         }
-
     }
 }

@@ -18,4 +18,3 @@ pub fn handle_qol_hacks(patcher: &mut Patcher, config: &Config) {
         patcher.add_change("EAEAEA", "d375"); //boss flash
     }
 }
-

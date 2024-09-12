@@ -1,23 +1,23 @@
 #[allow(dead_code)]
 #[derive(PartialEq, Eq)]
-pub enum ColorStrategy{
+pub enum ColorStrategy {
     Vanilla(HueOptions),
     All(HueOptions),
     Random,
-    ColorTheory(HueOptions)
+    ColorTheory(HueOptions),
 }
 
 #[allow(dead_code)]
 #[derive(PartialEq, Eq)]
-pub enum SaturationOptions{
+pub enum SaturationOptions {
     None,
     Safe,
-    All
+    All,
 }
 #[derive(PartialEq, Eq)]
 pub struct HueOptions {
     pub(crate) rotate_hue: bool,
-    pub(crate) flip_saturation: SaturationOptions
+    pub(crate) flip_saturation: SaturationOptions,
 }
 
 pub struct Config {
@@ -32,7 +32,7 @@ pub struct Config {
 }
 
 /*pub struct BadIdeas {
-    
+
 }*/
 
 pub struct CorridorConfig {

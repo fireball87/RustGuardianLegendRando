@@ -24,7 +24,6 @@ pub const BOMBARDER_RED: u32 = 15 / 4;
 
 pub const IT: u32 = 136 / 4;
 
-
 pub const SPIDER_GREEN: u32 = /*1 **/ 4;
 pub const SPIDER_BLUE: u32 = 3 * 4;
 pub const SPIDER_RED: u32 = 6 / 2;

@@ -303,7 +303,7 @@ fn tokenize_corridor(
         if corridor_number == 0 && entry.time == "074E" {
             entry.locked = true;
         }
-        
+
         /*if corridor_number == 7 && entry.time == "01B8" {
             entry.locked = true;
         }*/
@@ -429,10 +429,7 @@ fn shuffle_individual_corridor_internals(input_array: &mut Vec<TokenEntry>, rng:
             while input_array[index].command != "06" || input_array[index].locked {
                 index += 1;
             }
-            let entry_time = format!(
-                "{:04X}",
-                section_time + time
-            );
+            let entry_time = format!("{:04X}", section_time + time);
             input_array[index].time = entry_time.clone();
             if let Some(time_to_next) = &entry.time_to_next {
                 time += u16::from_str_radix(time_to_next, 16).unwrap();

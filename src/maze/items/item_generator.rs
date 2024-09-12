@@ -1,7 +1,7 @@
+use crate::patcher::Patcher;
 use rand::prelude::SliceRandom;
 use rand::Rng;
 use rand_chacha::ChaCha8Rng;
-use crate::patcher::Patcher;
 
 #[derive(Debug, Clone, Copy)]
 enum Item {
@@ -13,13 +13,13 @@ enum Item {
     // Fireball = 5,
     // AreaBlaster = 6,
     // Repeller = 7,
-    // HyperLaser = 8, 
+    // HyperLaser = 8,
     // SaberLaser = 9,
     // CutterSaber = 10,
     EnemyEraser = 11,
     EnemyTank = 12,
     BlueLander = 13,
-    Gun= 14,
+    Gun = 14,
     Shield = 15,
     RapidFire = 16,
     RedLander = 17,
@@ -49,7 +49,16 @@ impl ItemGenerator {
         let mut item_library = vec![vec![]; 11];
 
         let mut item_pool = Self::create_item_pool(
-            weapon_size, blue, red, shield, force_shields, guns, rapid_fires, etanks, enemy_erasers,rng
+            weapon_size,
+            blue,
+            red,
+            shield,
+            force_shields,
+            guns,
+            rapid_fires,
+            etanks,
+            enemy_erasers,
+            rng,
         );
 
         let pool_size = item_pool.len();
@@ -124,7 +133,10 @@ impl ItemGenerator {
         let mut patch_string = String::new();
         for i in pool_size - (single_shops + multi_shops + 1) + 1..=pool_size - (multi_shops + 1) {
             let id = i - (pool_size - (single_shops + multi_shops + 1)) + 57;
-            let price = Self::random_price_for_area(i - (pool_size - (single_shops + multi_shops + 1) + 1), rng);
+            let price = Self::random_price_for_area(
+                i - (pool_size - (single_shops + multi_shops + 1) + 1),
+                rng,
+            );
 
             let price_hex = format!("{:04X}", price);
             let flipped_price = format!("{}{}", &price_hex[2..4], &price_hex[0..2]);
@@ -156,7 +168,10 @@ impl ItemGenerator {
             multi_shop_library[desired_area].push(format!("{:02X}", id));
 
             if log {
-                println!("big shop {:02X} has {} in area {}", id, item_pool[i], desired_area);
+                println!(
+                    "big shop {:02X} has {} in area {}",
+                    id, item_pool[i], desired_area
+                );
             }
         }
 
@@ -192,7 +207,7 @@ impl ItemGenerator {
         rapid_fires: usize,
         etanks: usize,
         enemy_erasers: usize,
-        rng: &mut ChaCha8Rng
+        rng: &mut ChaCha8Rng,
     ) -> Vec<String> {
         let mut pool = vec![];
         for _ in 0..weapon_size {

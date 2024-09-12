@@ -7,7 +7,7 @@ pub struct Map {
     // It is 24 tiles wide and high, ending on (x=23, y=23)
     pub data: Array2<Room>, // A 2D array of Room objects
 }
-// 
+//
 impl Map {
     pub fn new() -> Self {
         let data: Array2<Room> = Array2::from_elem((24, 24), Room::default());
@@ -61,19 +61,31 @@ impl Map {
                             final_hex += &self.corridor_hex(direction_bit, area, item.enemy_type)
                         }
                         RoomType::Text => {
-                            final_hex += &self.text_hex(direction_bit, area, item.item_id.clone().unwrap())
+                            final_hex +=
+                                &self.text_hex(direction_bit, area, item.item_id.clone().unwrap())
                         }
                         RoomType::MultiShop => {
-                            final_hex +=
-                                &self.shop_hex(direction_bit, area, item.item_id.clone().unwrap(), true)
+                            final_hex += &self.shop_hex(
+                                direction_bit,
+                                area,
+                                item.item_id.clone().unwrap(),
+                                true,
+                            )
                         }
                         RoomType::SingleShop => {
-                            final_hex +=
-                                &self.shop_hex(direction_bit, area, item.item_id.clone().unwrap(), false)
+                            final_hex += &self.shop_hex(
+                                direction_bit,
+                                area,
+                                item.item_id.clone().unwrap(),
+                                false,
+                            )
                         }
                         RoomType::Miniboss => {
-                            final_hex +=
-                                &self.mini_boss_hex(direction_bit, area, item.item_id.clone().unwrap())
+                            final_hex += &self.mini_boss_hex(
+                                direction_bit,
+                                area,
+                                item.item_id.clone().unwrap(),
+                            )
                         }
                         RoomType::Item => {
                             final_hex += &self.item_room_hex(
@@ -172,13 +184,7 @@ impl Map {
 
         let value = format!(
             "{:X}{:X}{:X}{:X}0{:X}{}{}",
-            room_type,
-            length,
-            direction_bit,
-            required_key,
-            area,
-            enemy_string,
-            block_string
+            room_type, length, direction_bit, required_key, area, enemy_string, block_string
         );
         //println!("{} {} {} {} {} {} {} {}", room_type, length, direction_bit, required_key, meaningless_byte, area, enemy_string, block_string);
         value
@@ -187,7 +193,10 @@ impl Map {
     fn mini_boss_hex(&self, direction_bit: i32, area: i32, item_id: String) -> String {
         let required_key = self.get_key_from_area_for_most_rooms(area);
 
-        format!("43{:X}{:X}1{:X}{}", direction_bit, required_key, area, item_id)
+        format!(
+            "43{:X}{:X}1{:X}{}",
+            direction_bit, required_key, area, item_id
+        )
     }
 
     fn save_room_hex(&self, direction_bit: i32, area: i32) -> String {
@@ -257,7 +266,7 @@ impl Map {
             }
         }
     }
-    
+
     fn print_areas(&self) {
         for row in self.data.rows() {
             for item in row.iter() {

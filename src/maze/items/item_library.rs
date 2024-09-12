@@ -1,14 +1,9 @@
 use rand::Rng;
 use rand_chacha::ChaCha8Rng;
 
-
-
 pub fn get_item_blocks() -> Vec<&'static str> {
     vec!["AE94", "C994", "BE94", "B394"]
 }
-
-
-
 
 pub fn get_text_block(area: i32) -> Vec<&'static str> {
     match area {
@@ -28,15 +23,13 @@ pub fn get_text_block(area: i32) -> Vec<&'static str> {
     }
 }
 
-
-
 //transitionType is 0 for none, 1 for area, 2 for corridor
 //direction is 1up, 2down, 3left, 4right
 pub(crate) fn get_random_room_block(
     has_chips: bool,
     transition_type: i32,
     direction: i32,
-    rng: &mut ChaCha8Rng
+    rng: &mut ChaCha8Rng,
 ) -> String {
     match (has_chips, transition_type, direction) {
         (false, 0, _) => {
@@ -204,8 +197,6 @@ pub fn get_miniboss(area: i32) -> Vec<&'static str> {
 //     ]
 // }
 
-
-
 // pub fn get_item_library() -> Vec<Vec<&'static str>> {
 //     vec![
 //         vec!["21", "05", "39", "35"],
@@ -221,9 +212,6 @@ pub fn get_miniboss(area: i32) -> Vec<&'static str> {
 //         vec!["09"],
 //     ]
 // }
-
-
-
 
 // fn get_secret_items(area: i32) -> Vec<&'static str> {
 //     match area {
@@ -241,7 +229,7 @@ pub fn get_miniboss(area: i32) -> Vec<&'static str> {
 //         _ => panic!("Requested Invalid Area"),
 //     }
 // }
-// 
+//
 // pub(crate) fn get_secret_text_block(area: i32) -> Vec<&'static str> {
 //     match area {
 //         0 => vec!["01", "02", "03"], //removed "00" because we'll place it manually earlier
@@ -258,7 +246,7 @@ pub fn get_miniboss(area: i32) -> Vec<&'static str> {
 //         _ => panic!("Requested Invalid Area"),
 //     }
 // }
-// 
+//
 // fn get_secret_multi_shop(area: i32) -> Vec<&'static str> {
 //     match area {
 //         2 => vec!["3f"],
@@ -270,7 +258,7 @@ pub fn get_miniboss(area: i32) -> Vec<&'static str> {
 //         _ => panic!("Requested Invalid Area"),
 //     }
 // }
-// 
+//
 // fn get_secret_single_shop(area: i32) -> Vec<&'static str> {
 //     match area {
 //         0 => vec!["3d", "3a", "3b"],

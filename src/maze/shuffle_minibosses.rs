@@ -1,7 +1,7 @@
-use rand::Rng;
-use rand_chacha::ChaCha8Rng;
 use crate::config::Config;
 use crate::Patcher;
+use rand::Rng;
+use rand_chacha::ChaCha8Rng;
 
 pub fn shuffle_minibosses(patcher: &mut Patcher, _config: &Config, rng: &mut ChaCha8Rng) {
     // 22 minibosses

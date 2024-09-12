@@ -34,7 +34,7 @@ pub fn shuffle_corridors(
     ];
     // Refresh the list with the shuffled bosses
 
-    let mut final_id = None; 
+    let mut final_id = None;
     let mut c21_final_id = None;
     if let Some(shuffled_bosses) = shuffled_bosses {
         for (x, row) in table.iter_mut().enumerate() {
@@ -76,14 +76,13 @@ pub fn shuffle_corridors(
         pointers.push_str(&format!("{:04X}", row[2]));
         graphics.push_str(&format!("{:02X}", row[3]));
     }
-    
+
     //place the final boss into the string
     if let Some(id) = final_id {
         // try to shove the boss string into the c21 slot
         bosses.push_str(&format!("{:02X}", c21_final_id.unwrap()));
         bosses.push_str(&format!("{:02X}", id));
     }
-
 
     if log {
         println!();

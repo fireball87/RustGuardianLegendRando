@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use rand::prelude::SliceRandom;
 use rand::Rng;
 use rand_chacha::ChaCha8Rng;
@@ -101,7 +100,6 @@ impl ItemGenerator {
         }
         patcher.add_change(&*patch_string, "1EF51");
 
-        let mut patch_string = String::new();
         let mut item_string = String::new();
 
         for i in 20..=pool_size - (single_shops + multi_shops + 1) {
@@ -121,8 +119,7 @@ impl ItemGenerator {
             }
         }
 
-        patch_string = item_string;
-        patcher.add_change(&*patch_string, "16388");
+        patcher.add_change(&*item_string, "16388");
 
         let mut patch_string = String::new();
         for i in pool_size - (single_shops + multi_shops + 1) + 1..=pool_size - (multi_shops + 1) {

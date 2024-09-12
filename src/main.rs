@@ -7,14 +7,16 @@ mod patcher;
 mod qol_hacks;
 mod rebalance;
 mod colors;
+mod seed;
 
 use rand_chacha::ChaCha8Rng;
 use rand_seeder::Seeder;
 
-use crate::config::{BadIdeas, Config, CorridorConfig, QOLHacks};
+use crate::config::{BadIdeas, ColorStrategy, Config, CorridorConfig, HueOptions, QOLHacks, SaturationOptions};
 use crate::patcher::Patcher;
 use rand::{distributions::Alphanumeric, Rng};
 use crate::maze::map::Map;
+use crate::seed::make_seed;
 
 fn generate(patcher: &mut Patcher, cfg: &Config) {
     let mut rng: ChaCha8Rng = Seeder::from(&cfg.seed).make_rng();
@@ -54,9 +56,8 @@ fn generate(patcher: &mut Patcher, cfg: &Config) {
         }
     }
     
-    if(cfg.patch_colors){
-        colors::patch_themes::patch_all(cfg,patcher,&mut rng);
-    }
+    colors::patch_themes::patch_all(cfg,patcher,&mut Seeder::from(&cfg.seed).make_rng());
+    
 
     qol_hacks::handle_qol_hacks(patcher, cfg);
 
@@ -70,7 +71,7 @@ fn main() {
 
     let corridor_config = CorridorConfig {
         shuffle_skies: true,
-        shuffle_ground: true,
+        shuffle_ground: false, //currently jank
         shuffle_corridors: true,
         shuffle_bosses: true,
         shuffle_final_boss: true,
@@ -82,20 +83,19 @@ fn main() {
         remove_flash: true,
     };
     let bad_ideas = BadIdeas {
-        completely_random_colors: true,
     };
 
-    let rng_seed = rand::thread_rng()
-        .sample_iter(&Alphanumeric)
-        .take(10)
-        .map(char::from)
-        .collect();
 
+
+    let rng_seed = seed::make_seed();
+
+
+    let hue_options  = HueOptions{rotate_hue: true, flip_saturation: SaturationOptions::Safe};
     let cfg = Config {
         corridor_config,
         qol_hacks,
         bad_ideas,
-        patch_colors: true,
+        color_strategy: ColorStrategy::ColorTheory(hue_options),
         rebalance_bosses: true,
         randomize_boss_health: true,
         secret,
@@ -104,6 +104,8 @@ fn main() {
     };
 
     generate(&mut patcher, &cfg);
+    seed::write_seed(&mut patcher,&cfg);
+
 
     if writefiles {
         let rawdata = if secret {
@@ -115,12 +117,14 @@ fn main() {
         let rom = hex::encode(rawdata);
         //println!("ROM data: {}", rom);
 
-        let filetag = if secret { "secret" } else { "tgl" };
+        let filetag = if secret { "SECRET" } else { "TGL" };
 
-        //let rom_filename = format!("./output/{}-{}-{}.nes", chrono::Local::now().format("%Y-%m-%d"), filetag, cfg.seed);
         let rom_filename = "./output/1brokian.nes";
+        let rom_filename2 = format!("./output/{}-{}-{}.nes", filetag, chrono::Local::now().format("%Y-%m-%d"), cfg.seed);
 
         patcher.write_rom(&rom_filename, &rom);
+        patcher.write_rom(&rom_filename2, &rom);
+
         /*// Write IPS data to a .ips file
         let byte_array = b"your_ips_data_here"; // Replace with actual IPS data
         let ips_filename = format!(

@@ -248,7 +248,7 @@ fn tokenize_corridor(
                         if let Some(last_c7) = last_c7 {
                             let lc7 = &mut return_array[last_c7];
 
-                            if(level_data.pointer != u32::MAX){
+                            if level_data.pointer != u32::MAX {
                                 let pointer_string = format!("{:04X}", level_data.pointer);
                                 lc7.data = Some(pointer_string);
                                 println!(

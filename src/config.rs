@@ -1,8 +1,28 @@
+#[derive(PartialEq, Eq)]
+pub enum ColorStrategy{
+    Vanilla(HueOptions),
+    All(HueOptions),
+    Random,
+    ColorTheory(HueOptions)
+}
+
+#[derive(PartialEq, Eq)]
+pub enum SaturationOptions{
+    None,
+    Safe,
+    All
+}
+#[derive(PartialEq, Eq)]
+pub struct HueOptions {
+    pub(crate) rotate_hue: bool,
+    pub(crate) flip_saturation: SaturationOptions
+}
+
 pub struct Config {
     pub(crate) corridor_config: CorridorConfig,
     pub(crate) qol_hacks: QOLHacks,
     pub(crate) bad_ideas: BadIdeas,
-    pub(crate) patch_colors: bool,
+    pub(crate) color_strategy: ColorStrategy,
     pub(crate) rebalance_bosses: bool,
     pub(crate) randomize_boss_health: bool,
     pub(crate) secret: bool,
@@ -11,7 +31,7 @@ pub struct Config {
 }
 
 pub struct BadIdeas {
-    pub(crate) completely_random_colors: bool
+    
 }
 
 pub struct CorridorConfig {

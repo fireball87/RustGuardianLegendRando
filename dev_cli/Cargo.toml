@@ -1,0 +1,9 @@
+[package]
+name = "dev_cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tgl_rando_core = { path = "../tgl_rando_core" }
+chrono = "0.4.31"
+hex = { version = "0.4.3", features = [] }

@@ -38,14 +38,13 @@ pub struct CorridorConfig {
 }
 impl Default for CorridorConfig {
     fn default() -> Self {
-        CorridorConfig{
+        CorridorConfig {
             shuffle_skies: true,
             shuffle_ground: false, //currently jank
             shuffle_corridors: true,
         }
     }
 }
-
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct QOLHacks {
@@ -110,6 +109,3 @@ impl Default for Config {
         }
     }
 }
-
-
-

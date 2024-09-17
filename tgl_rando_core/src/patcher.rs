@@ -73,7 +73,7 @@ impl Patcher {
         std::fs::write(filename, hex::decode(patched).unwrap()).expect("Unable to write file");
     }
 
-    pub fn patch_u8_vec(&self, source_data: &Vec<u8>) -> Vec<u8>{
+    pub fn patch_u8_vec(&self, source_data: &Vec<u8>) -> Vec<u8> {
         let mut patched = source_data.clone();
 
         for change in &self.changes {
@@ -84,8 +84,6 @@ impl Patcher {
         }
         patched
     }
-
-
 }
 
 #[cfg(test)]

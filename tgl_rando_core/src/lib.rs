@@ -21,7 +21,7 @@ pub fn generate(patcher: &mut Patcher, cfg: &Config) {
     let mut rng: ChaCha8Rng = Seeder::from(&cfg.seed).make_rng();
     corridor::shuffle_corridor_components(patcher, cfg, &mut rng);
     rebalance::handle_rebalance(patcher, cfg, &mut rng);
-    if(cfg.boss_config.shuffle_bosses){
+    if (cfg.boss_config.shuffle_bosses) {
         maze::shuffle_minibosses::shuffle_minibosses(patcher, cfg, &mut rng);
     }
     let items = maze::items::item_generator::ItemGenerator::prepare_items(
@@ -49,8 +49,6 @@ pub fn generate(patcher: &mut Patcher, cfg: &Config) {
     qol_hacks::handle_qol_hacks(patcher, cfg);
     seed::write_seed(patcher, &cfg);
 }
-
-
 
 #[cfg(test)]
 mod tests {

@@ -1,9 +1,7 @@
 use dioxus::prelude::*;
-use tgl_rando_core::{patcher, seed, generate};
 use tgl_rando_core::config::*;
 use tgl_rando_core::patcher::Patcher;
-
-
+use tgl_rando_core::{generate, patcher, seed};
 
 /*
 #[derive(Props, PartialEq, Clone)]
@@ -34,8 +32,6 @@ impl Default for QOLHacksWrapper {
     }
 }*/
 
-
-
 fn main() {
     // launch the web app
     launch(app);
@@ -49,7 +45,7 @@ fn app() -> Element {
     //let mut uploaded: Signal<Vec<u8>> = use_signal(Vec::new);
     let mut file_name: Signal<String> = use_signal(String::new);
     let mut uploaded: Signal<Vec<u8>> = use_signal(Vec::new);
-    
+
     //let defaultCfg = build_default_cfg();
     // make a signal even though it doesn't need to be?
     let corridor_cfg = use_signal(|| CorridorConfig::default());
@@ -82,7 +78,7 @@ fn app() -> Element {
             corridor_config {c: corridor_cfg}
             boss_config {c: boss_cfg}
             qol_hacks {c: qol_cfg}
-            button { 
+            button {
                 disabled: uploaded().len() == 0,
                 onclick: move |_| {
                     patch_file(
@@ -96,7 +92,7 @@ fn app() -> Element {
                             log: false,
                             seed: seed::make_seed()
                         }
-                    ) 
+                    )
                 },
                 "Generate"
             }
@@ -104,25 +100,24 @@ fn app() -> Element {
     }
 }
 
-
 //pub shuffle_skies: bool,
 //pub shuffle_ground: bool,
 //pub shuffle_corridors: bool,
 #[component]
-fn corridor_config(c: Signal<CorridorConfig>) -> Element { 
+fn corridor_config(c: Signal<CorridorConfig>) -> Element {
     rsx! {
         div {
             h3 {"Corridor Config"}
-            input { 
-                r#type: "checkbox", 
+            input {
+                r#type: "checkbox",
                 checked:c().shuffle_corridors,
                 id: "shuffleCorridors",
-                oninput: move |event| c.set(CorridorConfig {shuffle_corridors: event.value().parse().unwrap(), ..c() 
-                })  
+                oninput: move |event| c.set(CorridorConfig {shuffle_corridors: event.value().parse().unwrap(), ..c()
+                })
             }
             label {for: "shuffleCorridors", "Shuffle Corridors"}
             br {}
-            
+
             input {
                 r#type: "checkbox",
                 checked: c().shuffle_ground,
@@ -131,7 +126,7 @@ fn corridor_config(c: Signal<CorridorConfig>) -> Element {
             }
             label {for: "shuffleGround", "Shuffle Ground !!!Currently Broken!!!"}
             br {}
-            
+
             input {
                 r#type: "checkbox",
                 checked: c().shuffle_skies,
@@ -144,7 +139,6 @@ fn corridor_config(c: Signal<CorridorConfig>) -> Element {
     }
 }
 
-
 //pub shuffle_bosses: bool,
 //pub shuffle_final_boss: bool,
 //pub rebalance_bosses: bool,
@@ -154,28 +148,28 @@ fn boss_config(c: Signal<BossConfig>) -> Element {
     rsx! {
         div {
             h3 {"Boss Config"}
-            
-            input { 
-                r#type: "checkbox", 
+
+            input {
+                r#type: "checkbox",
                 checked:c().shuffle_bosses,
                 id: "shuffle_bosses",
-                oninput: move |event| c.set(BossConfig {shuffle_bosses: event.value().parse().unwrap(), ..c() 
-                })  
+                oninput: move |event| c.set(BossConfig {shuffle_bosses: event.value().parse().unwrap(), ..c()
+                })
             }
-            label {for: "shuffle_bosses", "Shuffle Bosses"} 
+            label {for: "shuffle_bosses", "Shuffle Bosses"}
             br {}
 
-            
+
             input {
                 r#type: "checkbox",
                 checked: c().shuffle_final_boss,
                 id: "shuffle_final_boss",
                 oninput: move |event| c.set(BossConfig {shuffle_final_boss: event.value().parse().unwrap(), ..c()})
             }
-            label {for: "shuffle_final_boss", "Shuffle Final Boss (if shuffling bosses)"} 
+            label {for: "shuffle_final_boss", "Shuffle Final Boss (if shuffling bosses)"}
             br {}
 
-            
+
             input {
                 r#type: "checkbox",
                 checked: c().rebalance_bosses,
@@ -184,7 +178,7 @@ fn boss_config(c: Signal<BossConfig>) -> Element {
             }
             label {for: "rebalance_bosses", "Rebalance Bosses and apply Scaling Hack (will act as if true if either Shuffle Corridor or Shuffle Bosses is true.)"}
             br {}
-            
+
             input {
                 r#type: "checkbox",
                 checked: c().randomize_boss_health,
@@ -197,7 +191,6 @@ fn boss_config(c: Signal<BossConfig>) -> Element {
     }
 }
 
-
 /*faster_starting_fire: true,
 fix_hyper_laser: true,
 enemy_erasers_unlocked_from_start: true,
@@ -207,57 +200,53 @@ fn qol_hacks(c: Signal<QOLHacks>) -> Element {
     rsx! {
         div {
             h3 {"Quality Of Life Hacks"}
-            
-            input { 
-                r#type: "checkbox", 
+
+            input {
+                r#type: "checkbox",
                 checked:c().faster_starting_fire,
                 id: "faster_starting_fire",
-                oninput: move |event| c.set(QOLHacks {faster_starting_fire: event.value().parse().unwrap(), ..c() 
-                })  
+                oninput: move |event| c.set(QOLHacks {faster_starting_fire: event.value().parse().unwrap(), ..c()
+                })
             }
             label {for: "faster_starting_fire", "Increase Starting Fire Rate"}
             br {}
-            
-            input { 
-                r#type: "checkbox", 
+
+            input {
+                r#type: "checkbox",
                 checked:c().fix_hyper_laser,
                 id: "fix_hyper_laser",
-                oninput: move |event| c.set(QOLHacks {fix_hyper_laser: event.value().parse().unwrap(), ..c() 
-                })  
+                oninput: move |event| c.set(QOLHacks {fix_hyper_laser: event.value().parse().unwrap(), ..c()
+                })
             }
             label {for: "fix_hyper_laser", "Buff Hyperlaser Damage"}
             br {}
-            
-            input { 
-                r#type: "checkbox", 
+
+            input {
+                r#type: "checkbox",
                 checked:c().enemy_erasers_unlocked_from_start,
                 id: "enemy_erasers_unlocked_from_start",
-                oninput: move |event| c.set(QOLHacks {enemy_erasers_unlocked_from_start: event.value().parse().unwrap(), ..c() 
-                })  
+                oninput: move |event| c.set(QOLHacks {enemy_erasers_unlocked_from_start: event.value().parse().unwrap(), ..c()
+                })
             }
             label {for: "enemy_erasers_unlocked_from_start", "Unlock Enemy Eraser Drops At Game Start"}
             br {}
-            
-            input { 
-                r#type: "checkbox", 
+
+            input {
+                r#type: "checkbox",
                 checked:c().remove_flash,
                 id: "remove_flash",
-                oninput: move |event| c.set(QOLHacks {remove_flash: event.value().parse().unwrap(), ..c() 
-                })  
+                oninput: move |event| c.set(QOLHacks {remove_flash: event.value().parse().unwrap(), ..c()
+                })
             }
             label {for: "remove_flash", "Remove Flashing (enemy erasers and boss kills)"}
             br {}
-            
+
 
         }
     }
 }
 
-
-
-
-pub fn patch_file(name: &str, content: &Vec<u8>, cfg: Config){
-    
+pub fn patch_file(name: &str, content: &Vec<u8>, cfg: Config) {
     let patcher = setup(&cfg);
     let rom = patcher.patch_u8_vec(content);
     trigger_download(name, rom);
@@ -291,13 +280,10 @@ pub fn trigger_download(name: &str, content: Vec<u8>) {
     });
 }
 
-
-fn setup(cfg: &Config) -> Patcher{
+fn setup(cfg: &Config) -> Patcher {
     let mut patcher = Patcher::new();
 
     generate(&mut patcher, cfg);
 
     patcher
-
-
 }

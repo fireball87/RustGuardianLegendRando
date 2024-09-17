@@ -5,6 +5,6 @@ edition = "2021"
 
 [dependencies]
 tgl_rando_core = { path = "../tgl_rando_core" }
-dioxus = { version = "=0.6.0-alpha.2", features = ['web'] }
-dioxus-web = "=0.6.0-alpha.2"
+dioxus = { version = "=0.5.6", features = ['web'] }
+dioxus-web = "=0.5.6"
 hex = "0.4.3"

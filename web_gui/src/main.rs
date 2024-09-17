@@ -75,9 +75,9 @@ fn app() -> Element {
                     }
                 }
             }
-            corridor_config {c: corridor_cfg}
-            boss_config {c: boss_cfg}
-            qol_hacks {c: qol_cfg}
+            corridor_config { c: corridor_cfg }
+            boss_config { c: boss_cfg }
+            qol_hacks { c: qol_cfg }
             button {
                 disabled: uploaded().is_empty(),
                 onclick: move |_| {
@@ -90,8 +90,8 @@ fn app() -> Element {
                             color_strategy: ColorStrategy::Vanilla(HueOptions::default()),
                             boss_config: boss_cfg(),
                             log: false,
-                            seed: seed::make_seed()
-                        }
+                            seed: seed::make_seed(),
+                        },
                     )
                 },
                 "Generate"
@@ -107,33 +107,50 @@ fn app() -> Element {
 fn corridor_config(c: Signal<CorridorConfig>) -> Element {
     rsx! {
         div {
-            h3 {"Corridor Config"}
+            h3 { "Corridor Config" }
             input {
                 r#type: "checkbox",
-                checked:c().shuffle_corridors,
+                checked: c().shuffle_corridors,
                 id: "shuffleCorridors",
-                oninput: move |event| c.set(CorridorConfig {shuffle_corridors: event.value().parse().unwrap(), ..c()
-                })
+                oninput: move |event| {
+                    c
+                        .set(CorridorConfig {
+                            shuffle_corridors: event.value().parse().unwrap(),
+                            ..c()
+                        })
+                }
             }
-            label {for: "shuffleCorridors", "Shuffle Corridors"}
+            label { "for": "shuffleCorridors", "Shuffle Corridors" }
             br {}
 
             input {
                 r#type: "checkbox",
                 checked: c().shuffle_ground,
                 id: "shuffle_ground",
-                oninput: move |event| c.set(CorridorConfig {shuffle_ground: event.value().parse().unwrap(), ..c()})
+                oninput: move |event| {
+                    c
+                        .set(CorridorConfig {
+                            shuffle_ground: event.value().parse().unwrap(),
+                            ..c()
+                        })
+                }
             }
-            label {for: "shuffleGround", "Shuffle Ground !!!Currently Broken!!!"}
+            label { "for": "shuffleGround", "Shuffle Ground !!!Currently Broken!!!" }
             br {}
 
             input {
                 r#type: "checkbox",
                 checked: c().shuffle_skies,
                 id: "shuffle_skies",
-                oninput: move |event| c.set(CorridorConfig {shuffle_skies: event.value().parse().unwrap(), ..c()})
+                oninput: move |event| {
+                    c
+                        .set(CorridorConfig {
+                            shuffle_skies: event.value().parse().unwrap(),
+                            ..c()
+                        })
+                }
             }
-            label {for: "shuffleSkies", "Shuffle Air Enemy Spawns"}
+            label { "for": "shuffleSkies", "Shuffle Air Enemy Spawns" }
             br {}
         }
     }
@@ -147,45 +164,70 @@ fn corridor_config(c: Signal<CorridorConfig>) -> Element {
 fn boss_config(c: Signal<BossConfig>) -> Element {
     rsx! {
         div {
-            h3 {"Boss Config"}
+            h3 { "Boss Config" }
 
             input {
                 r#type: "checkbox",
-                checked:c().shuffle_bosses,
+                checked: c().shuffle_bosses,
                 id: "shuffle_bosses",
-                oninput: move |event| c.set(BossConfig {shuffle_bosses: event.value().parse().unwrap(), ..c()
-                })
+                oninput: move |event| {
+                    c
+                        .set(BossConfig {
+                            shuffle_bosses: event.value().parse().unwrap(),
+                            ..c()
+                        })
+                }
             }
-            label {for: "shuffle_bosses", "Shuffle Bosses"}
+            label { "for": "shuffle_bosses", "Shuffle Bosses" }
             br {}
-
 
             input {
                 r#type: "checkbox",
                 checked: c().shuffle_final_boss,
                 id: "shuffle_final_boss",
-                oninput: move |event| c.set(BossConfig {shuffle_final_boss: event.value().parse().unwrap(), ..c()})
+                oninput: move |event| {
+                    c
+                        .set(BossConfig {
+                            shuffle_final_boss: event.value().parse().unwrap(),
+                            ..c()
+                        })
+                }
             }
-            label {for: "shuffle_final_boss", "Shuffle Final Boss (if shuffling bosses)"}
+            label { "for": "shuffle_final_boss", "Shuffle Final Boss (if shuffling bosses)" }
             br {}
-
 
             input {
                 r#type: "checkbox",
                 checked: c().rebalance_bosses,
                 id: "rebalance_bosses",
-                oninput: move |event| c.set(BossConfig {rebalance_bosses: event.value().parse().unwrap(), ..c()})
+                oninput: move |event| {
+                    c
+                        .set(BossConfig {
+                            rebalance_bosses: event.value().parse().unwrap(),
+                            ..c()
+                        })
+                }
             }
-            label {for: "rebalance_bosses", "Rebalance Bosses and apply Scaling Hack (will act as if true if either Shuffle Corridor or Shuffle Bosses is true.)"}
+            label { "for": "rebalance_bosses",
+                "Rebalance Bosses and apply Scaling Hack (will act as if true if either Shuffle Corridor or Shuffle Bosses is true.)"
+            }
             br {}
 
             input {
                 r#type: "checkbox",
                 checked: c().randomize_boss_health,
                 id: "randomize_boss_health",
-                oninput: move |event| c.set(BossConfig {randomize_boss_health: event.value().parse().unwrap(), ..c()})
+                oninput: move |event| {
+                    c
+                        .set(BossConfig {
+                            randomize_boss_health: event.value().parse().unwrap(),
+                            ..c()
+                        })
+                }
             }
-            label {for: "randomize_boss_health", "Randomize Boss Health Values (if we are rebalancing them)"}
+            label { "for": "randomize_boss_health",
+                "Randomize Boss Health Values (if we are rebalancing them)"
+            }
             br {}
         }
     }
@@ -199,49 +241,67 @@ remove_flash: true,*/
 fn qol_hacks(c: Signal<QOLHacks>) -> Element {
     rsx! {
         div {
-            h3 {"Quality Of Life Hacks"}
+            h3 { "Quality Of Life Hacks" }
 
             input {
                 r#type: "checkbox",
-                checked:c().faster_starting_fire,
+                checked: c().faster_starting_fire,
                 id: "faster_starting_fire",
-                oninput: move |event| c.set(QOLHacks {faster_starting_fire: event.value().parse().unwrap(), ..c()
-                })
+                oninput: move |event| {
+                    c
+                        .set(QOLHacks {
+                            faster_starting_fire: event.value().parse().unwrap(),
+                            ..c()
+                        })
+                }
             }
-            label {for: "faster_starting_fire", "Increase Starting Fire Rate"}
+            label { "for": "faster_starting_fire", "Increase Starting Fire Rate" }
             br {}
 
             input {
                 r#type: "checkbox",
-                checked:c().fix_hyper_laser,
+                checked: c().fix_hyper_laser,
                 id: "fix_hyper_laser",
-                oninput: move |event| c.set(QOLHacks {fix_hyper_laser: event.value().parse().unwrap(), ..c()
-                })
+                oninput: move |event| {
+                    c
+                        .set(QOLHacks {
+                            fix_hyper_laser: event.value().parse().unwrap(),
+                            ..c()
+                        })
+                }
             }
-            label {for: "fix_hyper_laser", "Buff Hyperlaser Damage"}
+            label { "for": "fix_hyper_laser", "Buff Hyperlaser Damage" }
             br {}
 
             input {
                 r#type: "checkbox",
-                checked:c().enemy_erasers_unlocked_from_start,
+                checked: c().enemy_erasers_unlocked_from_start,
                 id: "enemy_erasers_unlocked_from_start",
-                oninput: move |event| c.set(QOLHacks {enemy_erasers_unlocked_from_start: event.value().parse().unwrap(), ..c()
-                })
+                oninput: move |event| {
+                    c
+                        .set(QOLHacks {
+                            enemy_erasers_unlocked_from_start: event.value().parse().unwrap(),
+                            ..c()
+                        })
+                }
             }
-            label {for: "enemy_erasers_unlocked_from_start", "Unlock Enemy Eraser Drops At Game Start"}
+            label { "for": "enemy_erasers_unlocked_from_start", "Unlock Enemy Eraser Drops At Game Start" }
             br {}
 
             input {
                 r#type: "checkbox",
-                checked:c().remove_flash,
+                checked: c().remove_flash,
                 id: "remove_flash",
-                oninput: move |event| c.set(QOLHacks {remove_flash: event.value().parse().unwrap(), ..c()
-                })
+                oninput: move |event| {
+                    c
+                        .set(QOLHacks {
+                            remove_flash: event.value().parse().unwrap(),
+                            ..c()
+                        })
+                }
             }
-            label {for: "remove_flash", "Remove Flashing (enemy erasers and boss kills)"}
+            label { "for": "remove_flash", "Remove Flashing (enemy erasers and boss kills)" }
             br {}
-
-
         }
     }
 }

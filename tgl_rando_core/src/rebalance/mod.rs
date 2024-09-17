@@ -8,11 +8,11 @@ use rand::Rng;
 use rand_chacha::ChaCha8Rng;
 
 pub fn handle_rebalance(patcher: &mut Patcher, config: &Config, rng: &mut ChaCha8Rng) {
-    if config.rebalance_bosses
+    if config.boss_config.rebalance_bosses
         || config.corridor_config.shuffle_corridors
-        || config.corridor_config.shuffle_bosses
+        || config.boss_config.shuffle_bosses
     {
-        let rand_health = config.randomize_boss_health;
+        let rand_health = config.boss_config.randomize_boss_health;
         rebalance_all(patcher, rand_health, rng);
     }
 }

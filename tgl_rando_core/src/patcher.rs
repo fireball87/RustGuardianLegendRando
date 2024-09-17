@@ -34,7 +34,6 @@ impl Patcher {
         self.changes.push(change);
     }
 
-    #[allow(dead_code)]
     pub fn build_ips(&self) -> Vec<u8> {
         let mut byte_array: Vec<u8> = Vec::new();
         byte_array.extend_from_slice(&hex::decode("5041544348").unwrap()); // add header
@@ -73,6 +72,20 @@ impl Patcher {
 
         std::fs::write(filename, hex::decode(patched).unwrap()).expect("Unable to write file");
     }
+
+    pub fn patch_u8_vec(&self, source_data: &Vec<u8>) -> Vec<u8>{
+        let mut patched = source_data.clone();
+
+        for change in &self.changes {
+            let offset = usize::from_str_radix(&change.offset, 16).unwrap();
+            let change_bytes = hex::decode(&change.hex).unwrap();
+            let end = offset + change_bytes.len();
+            patched.splice(offset..end, change_bytes.iter().cloned());
+        }
+        patched
+    }
+
+
 }
 
 #[cfg(test)]

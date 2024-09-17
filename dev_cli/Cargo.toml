@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+getrandom = { version = "0.2.15", features = ["js"] }
 tgl_rando_core = { path = "../tgl_rando_core" }
-chrono = "0.4.31"
+#chrono = "0.4.38"
 hex = { version = "0.4.3", features = [] }

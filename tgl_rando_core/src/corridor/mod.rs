@@ -15,10 +15,10 @@ pub fn shuffle_corridor_components(patcher: &mut Patcher, config: &Config, rng: 
         patcher.add_change("7F", "1301b");
     }
 
-    let shuffled_bosses = if config.corridor_config.shuffle_bosses {
+    let shuffled_bosses = if config.boss_config.shuffle_bosses {
         Some(shuffle_bosses::randomize_bosses(
             patcher,
-            config.corridor_config.shuffle_final_boss,
+            config.boss_config.shuffle_final_boss,
             rng,
         ))
     } else {

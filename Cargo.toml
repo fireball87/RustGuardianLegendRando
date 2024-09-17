@@ -1,5 +1,6 @@
 [workspace]
 members = [
     "dev_cli",
-    "tgl_rando_core",
+    "tgl_rando_core", "web_gui",
 ]
+resolver = "2"

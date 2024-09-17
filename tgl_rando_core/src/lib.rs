@@ -21,7 +21,9 @@ pub fn generate(patcher: &mut Patcher, cfg: &Config) {
     let mut rng: ChaCha8Rng = Seeder::from(&cfg.seed).make_rng();
     corridor::shuffle_corridor_components(patcher, cfg, &mut rng);
     rebalance::handle_rebalance(patcher, cfg, &mut rng);
-    maze::shuffle_minibosses::shuffle_minibosses(patcher, cfg, &mut rng);
+    if(cfg.boss_config.shuffle_bosses){
+        maze::shuffle_minibosses::shuffle_minibosses(patcher, cfg, &mut rng);
+    }
     let items = maze::items::item_generator::ItemGenerator::prepare_items(
         patcher, 5, 5, 4, 9, 10, 6, true, 5, 5, 3, 5, cfg.log, &mut rng,
     );
@@ -45,6 +47,7 @@ pub fn generate(patcher: &mut Patcher, cfg: &Config) {
     colors::patch_themes::patch_all(cfg, patcher, &mut Seeder::from(&cfg.seed).make_rng());
 
     qol_hacks::handle_qol_hacks(patcher, cfg);
+    seed::write_seed(patcher, &cfg);
 }
 
 
@@ -54,27 +57,10 @@ mod tests {
     #[test]
     fn test_seed_consistancy() {
         use super::*;
-        let corridor_config = CorridorConfig {
-            shuffle_skies: true,
-            shuffle_ground: true,
-            shuffle_corridors: true,
-            shuffle_bosses: true,
-            shuffle_final_boss: true,
-        };
-        let qol_hacks = QOLHacks {
-            faster_starting_fire: true,
-            fix_hyper_laser: true,
-            enemy_erasers_unlocked_from_start: true,
-            remove_flash: true,
-        };
 
         let cfg = Config {
-            corridor_config,
-            qol_hacks,
-            rebalance_bosses: true,
-            randomize_boss_health: true,
-            log: true,
             seed: "TestSeed".to_string(),
+            ..Config::default()
         };
 
         let mut p1 = Patcher::new();
@@ -91,7 +77,7 @@ mod tests {
         assert_eq!(ips1, ips2);
     }
 
-    fn test_100_generations() {
+    /*fn test_100_generations() {
         use super::*;
         for i in 0..1000 {
             let corridor_config = CorridorConfig {
@@ -125,5 +111,5 @@ mod tests {
             generate(&mut p1, &cfg);
             print!("{}", i);
         }
-    }
+    }*/
 }

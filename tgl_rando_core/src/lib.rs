@@ -12,9 +12,7 @@ pub mod seed;
 use rand_chacha::ChaCha8Rng;
 use rand_seeder::Seeder;
 
-use crate::config::{
-    Config, SaturationOptions,
-};
+use crate::config::{Config, SaturationOptions};
 use crate::patcher::Patcher;
 
 pub fn generate(patcher: &mut Patcher, cfg: &Config) {

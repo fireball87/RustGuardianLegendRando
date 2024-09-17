@@ -10,4 +10,4 @@ jobs:
       - name: "Dioxus Deploy"
         uses: DioxusLabs/deploy-action@0.1.1
         with:
-          root-path: "./web_gui/"
+          rootPath: "./web_gui/"

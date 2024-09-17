@@ -1,4 +1,4 @@
-use tgl_rando_core::{config::*, generate, patcher::Patcher, seed};
+use tgl_rando_core::{config::*, generate, patcher::Patcher};
 
 fn main() {
     let writefiles = true;

@@ -16,6 +16,12 @@ pub struct Patcher {
     changes: Vec<Change>,
 }
 
+impl Default for Patcher {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Patcher {
     pub fn new() -> Self {
         Self {

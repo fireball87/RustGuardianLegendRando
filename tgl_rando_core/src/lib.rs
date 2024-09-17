@@ -13,7 +13,7 @@ use rand_chacha::ChaCha8Rng;
 use rand_seeder::Seeder;
 
 use crate::config::{
-    ColorStrategy, Config, CorridorConfig, HueOptions, QOLHacks, SaturationOptions,
+    Config, SaturationOptions,
 };
 use crate::patcher::Patcher;
 
@@ -21,7 +21,7 @@ pub fn generate(patcher: &mut Patcher, cfg: &Config) {
     let mut rng: ChaCha8Rng = Seeder::from(&cfg.seed).make_rng();
     corridor::shuffle_corridor_components(patcher, cfg, &mut rng);
     rebalance::handle_rebalance(patcher, cfg, &mut rng);
-    if (cfg.boss_config.shuffle_bosses) {
+    if cfg.boss_config.shuffle_bosses {
         maze::shuffle_minibosses::shuffle_minibosses(patcher, cfg, &mut rng);
     }
     let items = maze::items::item_generator::ItemGenerator::prepare_items(
@@ -47,7 +47,7 @@ pub fn generate(patcher: &mut Patcher, cfg: &Config) {
     colors::patch_themes::patch_all(cfg, patcher, &mut Seeder::from(&cfg.seed).make_rng());
 
     qol_hacks::handle_qol_hacks(patcher, cfg);
-    seed::write_seed(patcher, &cfg);
+    seed::write_seed(patcher, cfg);
 }
 
 #[cfg(test)]

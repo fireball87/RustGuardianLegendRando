@@ -1,7 +1,7 @@
 use dioxus::prelude::*;
 use tgl_rando_core::config::*;
 use tgl_rando_core::patcher::Patcher;
-use tgl_rando_core::{generate, patcher, seed};
+use tgl_rando_core::{generate, seed};
 
 /*
 #[derive(Props, PartialEq, Clone)]
@@ -48,9 +48,9 @@ fn app() -> Element {
 
     //let defaultCfg = build_default_cfg();
     // make a signal even though it doesn't need to be?
-    let corridor_cfg = use_signal(|| CorridorConfig::default());
-    let boss_cfg = use_signal(|| BossConfig::default());
-    let qol_cfg = use_signal(|| QOLHacks::default());
+    let corridor_cfg = use_signal(CorridorConfig::default);
+    let boss_cfg = use_signal(BossConfig::default);
+    let qol_cfg = use_signal(QOLHacks::default);
 
     rsx! {
         div {
@@ -79,7 +79,7 @@ fn app() -> Element {
             boss_config {c: boss_cfg}
             qol_hacks {c: qol_cfg}
             button {
-                disabled: uploaded().len() == 0,
+                disabled: uploaded().is_empty(),
                 onclick: move |_| {
                     patch_file(
                         "tgl_rando.nes",

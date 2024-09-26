@@ -33,7 +33,7 @@ struct PatchSet {
 pub fn patch_all(cfg: &Config, patcher: &mut Patcher, rng: &mut ChaCha8Rng) {
     let areas = [
         get_c0(),
-        get_a0(), /*get_a1(), get_a3(), get_a5(), get_a7(), get_a9()*/
+        get_a0(), get_a1(), get_a3(),/* get_a5(), get_a7(), get_a9()*/
     ];
 
     for area in areas {
@@ -483,39 +483,173 @@ fn get_a0() -> (&'static str, Vec<PatchSet>) {
     )
 }
 
-/*fn get_a3() -> Vec<Vec<Patch>>{
-    vec![
-        //vanilla
+
+
+
+fn get_a1() -> (&'static str, Vec<PatchSet>) {
+    (
+        "a1",
+        // good test level is 11/OB as it has both grass and the firing enemies
+
         vec![
-            //1. used for flowers,
-            // first 2 colors should match 2
-            // Final value should match final value of 3
-            Patch{address: "1735C", hex_code: "30160A"},
-            //2. demon plant,
-            // first 2 colors should match 1
-            // last color should be close
-            Patch{address: "1735F", hex_code: "301606"},
-            //3. background
-            Patch{address: "17362", hex_code: "2A1A0A"},
-        ],
-        //fall
-        vec![
-            //1. used for flowers,
-            // first 2 colors should match 2
-            // Final value should match final value of 3
-            Patch{address: "1735C", hex_code: "281707"},
-            //2. demon plant,
-            // first 2 colors should match 1
-            // last color should be close
-            Patch{address: "1735F", hex_code: "271706"},
-            //3. background
-            Patch{address: "17362", hex_code: "261707"},
-        ],
-    ]
+            //vanilla
+            PatchSet {
+                name: "Vanilla",
+                theme_set: vec![ThemeSet::All, ThemeSet::Vanilla],
+                saturation_flip_safe: true,
+                patches: vec![
+                    //1. used for grass, middle almost certainly must match
+                    Patch{address: "17365", hex_code: "2A1C1A"},
+                    //2. firing ground plants, middle color should match ground middle
+                    //last color is used for the center of the bubble spawners
+                    Patch{address: "17368", hex_code: "301C16"},
+                    //3. ground colors, middle should match 2 middle
+                    Patch{address: "1736B", hex_code: "2C1C0C"},
+                ],
+            },
+            PatchSet {
+                name: "Deep Blue",
+                theme_set: vec![ThemeSet::All, ThemeSet::Crafted],
+                saturation_flip_safe: true,
+                patches: vec![
+                    //1. used for grass, middle almost certainly must match
+                    Patch{address: "17365", hex_code: "180104"},
+                    //2. firing ground plants, middle color should match ground middle
+                    //last color is used for the center of the bubble spawners
+                    Patch{address: "17368", hex_code: "140127"},
+                    //3. ground colors, middle should match 2 middle
+                    Patch{address: "1736B", hex_code: "110102"},
+                ],
+            },
+
+
+            PatchSet { //this theme kinda looks like hot garbagio but it shifts mostly fine, consider for replacement
+                name: "Algae",
+                theme_set: vec![ThemeSet::All, ThemeSet::Crafted, ThemeSet::ColorTheory(ColorTheory::Monochrome)],
+                saturation_flip_safe: true,
+                patches: vec![
+                    //1. used for grass, middle almost certainly must match
+                    Patch{address: "17365", hex_code: "1B0A1A"},
+                    //2. firing ground plants, middle color should match ground middle
+                    //last color is used for the center of the bubble spawners
+                    Patch{address: "17368", hex_code: "1A0A29"},
+                    //3. ground colors, middle should match 2 middle
+                    Patch{address: "1736B", hex_code: "090A0B"},
+                ],
+            },
+
+            PatchSet { //this theme kinda looks like hot garbagio but it shifts mostly fine, consider for replacement
+                name: "Pink Slime",
+                theme_set: vec![ThemeSet::All, ThemeSet::Crafted, ThemeSet::ColorTheory(ColorTheory::Complementary)],
+                saturation_flip_safe: true,
+                patches: vec![
+                    //1. used for grass, middle almost certainly must match
+                    Patch{address: "17365", hex_code: "190408"},
+                    //2. firing ground plants, middle color should match ground middle
+                    //last color is used for the center of the bubble spawners
+                    Patch{address: "17368", hex_code: "180429"},
+                    //3. ground colors, middle should match 2 middle
+                    Patch{address: "1736B", hex_code: "140403"},
+                ],
+            },
+            
+            
+            PatchSet { //this theme kinda looks like hot garbagio but it shifts mostly fine, consider for replacement
+                name: "Pale Blue",
+                theme_set: vec![ThemeSet::All, ThemeSet::Crafted, ThemeSet::ColorTheory(ColorTheory::Triad)],
+                saturation_flip_safe: true,
+                patches: vec![
+                    //1. used for grass, middle almost certainly must match
+                    Patch{address: "17365", hex_code: "292218"},
+                    //2. firing ground plants, middle color should match ground middle
+                    //last color is used for the center of the bubble spawners
+                    Patch{address: "17368", hex_code: "252205"},
+                    //3. ground colors, middle should match 2 middle
+                    Patch{address: "1736B", hex_code: "112212"},
+                ],
+            },
+            
+        ] 
+    )
 }
 
 
-fn get_a9() -> Vec<Vec<Patch>>{
+fn get_a3() -> (&'static str, Vec<PatchSet>){
+    ("a3", //test on c14/OE
+    vec![
+        PatchSet {
+            name: "Vanilla",
+            theme_set: vec![ThemeSet::All, ThemeSet::Vanilla],
+            saturation_flip_safe: false,
+            patches: vec![
+                //1. used for flowers,
+                // first 2 colors should match 2
+                // Final value should match final value of 3
+                Patch{address: "1735C", hex_code: "30160A"},
+                //2. demon plant,
+                // first 2 colors should match 1
+                // last color should be close
+                Patch{address: "1735F", hex_code: "301606"},
+                //3. background
+                Patch{address: "17362", hex_code: "2A1A0A"},
+            ],
+        },
+        PatchSet {
+            name: "Fall",
+            theme_set: vec![ThemeSet::All, ThemeSet::Crafted, ThemeSet::ColorTheory(ColorTheory::Monochrome)],
+            saturation_flip_safe: false,
+            patches: vec![
+                //1. used for flowers,
+                // first 2 colors should match 2
+                // Final value should match final value of 3
+                Patch{address: "1735C", hex_code: "281707"},
+                //2. demon plant,
+                // first 2 colors should match 1
+                // last color should be close
+                Patch{address: "1735F", hex_code: "271706"},
+                //3. background
+                Patch{address: "17362", hex_code: "261707"},
+            ],
+        },
+        PatchSet {
+            name: "Musk",
+            theme_set: vec![ThemeSet::All, ThemeSet::Crafted, ThemeSet::ColorTheory(ColorTheory::Complementary)],
+            saturation_flip_safe: false,
+            patches: vec![
+                //1. used for flowers,
+                // first 2 colors should match 2
+                // Final value should match final value of 3
+                Patch{address: "1735C", hex_code: "240308"},
+                //2. demon plant,
+                // first 2 colors should match 1
+                // last color should be close
+                Patch{address: "1735F", hex_code: "241303"},
+                //3. background
+                Patch{address: "17362", hex_code: "381808"},
+            ],
+        },
+        PatchSet {
+            name: "Soil",
+            theme_set: vec![ThemeSet::All, ThemeSet::Crafted, ThemeSet::ColorTheory(ColorTheory::Triad)],
+            saturation_flip_safe: false,
+            patches: vec![
+                //1. used for flowers,
+                // first 2 colors should match 2
+                // Final value should match final value of 3
+                Patch{address: "1735C", hex_code: "230307"},
+                //2. demon plant,
+                // first 2 colors should match 1
+                // last color should be close
+                Patch{address: "1735F", hex_code: "230313"},
+                //3. background
+                Patch{address: "17362", hex_code: "1b0b07"},
+            ],
+        },
+    ])
+}
+
+
+/*fn get_a9() -> Vec<Vec<Patch>>{
     vec![
         //vanilla
         vec![
@@ -561,30 +695,7 @@ fn get_a5() -> Vec<Vec<Patch>>{
 }
 
 
-fn get_a1() -> Vec<Vec<Patch>>{
-    vec![
-        //vanilla
-        vec![
-            //1. used for grass, middle almost certainly must match
-            Patch{address: "17365", hex_code: "2A1C1A"},
-            //2. firing ground plants, middle color should match ground middle
-            //last color is used for the center of the bubble spawners
-            Patch{address: "17368", hex_code: "301C16"},
-            //3. ground colors, middle should match 2 middle
-            Patch{address: "1736B", hex_code: "2C1C0C"},
-        ],
-        //deep blue
-        vec![
-            //1. used for grass, middle almost certainly must match
-            Patch{address: "17365", hex_code: "180104"},
-            //2. firing ground plants, middle color should match ground middle
-            //last color is used for the center of the bubble spawners
-            Patch{address: "17368", hex_code: "140127"},
-            //3. ground colors, middle should match 2 middle
-            Patch{address: "1736B", hex_code: "110102"},
-        ],
-    ]
-}*/
+*/
 
 fn get_ran_palette(rng: &mut ChaCha8Rng) -> String {
     let colors = vec![

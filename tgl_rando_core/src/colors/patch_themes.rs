@@ -4,6 +4,7 @@ use crate::patcher::Patcher;
 use crate::SaturationOptions;
 use rand::Rng;
 use rand_chacha::ChaCha8Rng;
+use crate::config::ColorStrategy::Vanilla;
 
 #[derive(PartialEq, Eq)]
 enum ThemeSet {
@@ -31,9 +32,19 @@ struct PatchSet {
     saturation_flip_safe: bool,
 }
 pub fn patch_all(cfg: &Config, patcher: &mut Patcher, rng: &mut ChaCha8Rng) {
+    match &cfg.color_strategy {
+        Vanilla(hue) => {
+            if(hue.rotate_hue || hue.flip_saturation != SaturationOptions::None){
+                move_a5_floor_color_to_volcano(patcher);
+            }
+        }
+        _ => {
+            move_a5_floor_color_to_volcano(patcher);
+        }
+    }
     let areas = [
         get_c0(),
-        get_a0(), get_a1(), get_a3(),/* get_a5(), get_a7(), get_a9()*/
+        get_a0(), get_a1(), get_a3(), get_a5(), get_a7(), get_a9()  
     ];
 
     for area in areas {
@@ -496,7 +507,7 @@ fn get_a1() -> (&'static str, Vec<PatchSet>) {
             PatchSet {
                 name: "Vanilla",
                 theme_set: vec![ThemeSet::All, ThemeSet::Vanilla],
-                saturation_flip_safe: true,
+                saturation_flip_safe: false,
                 patches: vec![
                     //1. used for grass, middle almost certainly must match
                     Patch{address: "17365", hex_code: "2A1C1A"},
@@ -510,7 +521,7 @@ fn get_a1() -> (&'static str, Vec<PatchSet>) {
             PatchSet {
                 name: "Deep Blue",
                 theme_set: vec![ThemeSet::All, ThemeSet::Crafted],
-                saturation_flip_safe: true,
+                saturation_flip_safe: false,
                 patches: vec![
                     //1. used for grass, middle almost certainly must match
                     Patch{address: "17365", hex_code: "180104"},
@@ -526,7 +537,7 @@ fn get_a1() -> (&'static str, Vec<PatchSet>) {
             PatchSet { //this theme kinda looks like hot garbagio but it shifts mostly fine, consider for replacement
                 name: "Algae",
                 theme_set: vec![ThemeSet::All, ThemeSet::Crafted, ThemeSet::ColorTheory(ColorTheory::Monochrome)],
-                saturation_flip_safe: true,
+                saturation_flip_safe: false,
                 patches: vec![
                     //1. used for grass, middle almost certainly must match
                     Patch{address: "17365", hex_code: "1B0A1A"},
@@ -541,7 +552,7 @@ fn get_a1() -> (&'static str, Vec<PatchSet>) {
             PatchSet { //this theme kinda looks like hot garbagio but it shifts mostly fine, consider for replacement
                 name: "Pink Slime",
                 theme_set: vec![ThemeSet::All, ThemeSet::Crafted, ThemeSet::ColorTheory(ColorTheory::Complementary)],
-                saturation_flip_safe: true,
+                saturation_flip_safe: false,
                 patches: vec![
                     //1. used for grass, middle almost certainly must match
                     Patch{address: "17365", hex_code: "190408"},
@@ -557,7 +568,7 @@ fn get_a1() -> (&'static str, Vec<PatchSet>) {
             PatchSet { //this theme kinda looks like hot garbagio but it shifts mostly fine, consider for replacement
                 name: "Pale Blue",
                 theme_set: vec![ThemeSet::All, ThemeSet::Crafted, ThemeSet::ColorTheory(ColorTheory::Triad)],
-                saturation_flip_safe: true,
+                saturation_flip_safe: false,
                 patches: vec![
                     //1. used for grass, middle almost certainly must match
                     Patch{address: "17365", hex_code: "292218"},
@@ -648,54 +659,196 @@ fn get_a3() -> (&'static str, Vec<PatchSet>){
     ])
 }
 
-
-/*fn get_a9() -> Vec<Vec<Patch>>{
+fn get_a7() -> (&'static str, Vec<PatchSet>){
+    ("a7",
     vec![
-        //vanilla
-        vec![
-            //1. donno
-            Patch{address: "1734A", hex_code: "271707"},
-            //2. donno
-            Patch{address: "1734D", hex_code: "37170F"},
-            //3. background
-            Patch{address: "17350", hex_code: "281808"},
-        ],
+        PatchSet {
+            name: "Vanilla",
+            theme_set: vec![ThemeSet::All, ThemeSet::Vanilla],
+            saturation_flip_safe: false,
+            patches: vec![
+                //1. eyeballs seem to be it, last digit should match last digit of 03
+                Patch{address: "17353", hex_code: "302112"},
+                //2. i think this is the blue plants
+                Patch{address: "17356", hex_code: "221205"},
+                //3. background
+                Patch{address: "17359", hex_code: "250605"},
+            ],
+        },
+        PatchSet {
+            name: "Blue Blood",
+            theme_set: vec![ThemeSet::All, ThemeSet::Crafted, ThemeSet::ColorTheory(ColorTheory::Monochrome)],
+            saturation_flip_safe: false,
+            patches: vec![
+                //1. eyeballs seem to be it, last digit should match last digit of 03
+                Patch{address: "17353", hex_code: "303121"},
+                //2. i think this is the blue plants
+                Patch{address: "17356", hex_code: "312102"},
+                //3. background
+                Patch{address: "17359", hex_code: "012102"},
+            ],
+        },
+        PatchSet {
+            name: "Sickly",
+            theme_set: vec![ThemeSet::All, ThemeSet::Crafted, ThemeSet::ColorTheory(ColorTheory::Triad)],
+            saturation_flip_safe: false,
+            patches: vec![
+                //1. eyeballs seem to be it, last digit should match last digit of 03
+                Patch{address: "17353", hex_code: "311101"},
+                //2. i think this is the blue plants
+                Patch{address: "17356", hex_code: "280805"},
+                //3. background
+                Patch{address: "17359", hex_code: "281505"},
+            ],
+        },
+        PatchSet {
+            name: "Flesh",
+            theme_set: vec![ThemeSet::All, ThemeSet::Crafted, ThemeSet::ColorTheory(ColorTheory::Complementary)],
+            saturation_flip_safe: false,
+            patches: vec![
+                //1. eyeballs seem to be it, last digit should match last digit of 03
+                Patch{address: "17353", hex_code: "332203"},
+                //2. i think this is the blue plants
+                Patch{address: "17356", hex_code: "120308"},
+                //3. background
+                Patch{address: "17359", hex_code: "182808"},
+            ],
+        },
     ]
+    )
 }
 
-fn get_a7() -> Vec<Vec<Patch>>{
+
+
+
+fn get_a9() -> (&'static str, Vec<PatchSet>){
+    ( "a9",
     vec![
-        //vanilla
-        vec![
-            //1. eyeballs seem to be it
-            Patch{address: "17353", hex_code: "302112"},
-            //2. i think this is the blue plants
-            Patch{address: "17356", hex_code: "221205"},
-            //3. background
-            Patch{address: "17359", hex_code: "250605"},
-        ],
-    ]
+        PatchSet {
+            name: "Vanilla",
+            theme_set: vec![ThemeSet::All, ThemeSet::Vanilla],
+            saturation_flip_safe: false,
+            patches: vec![
+                //1. seems nothing
+                //Patch{address: "1734A", hex_code: "271707"},
+                //2. seems nothing
+                //Patch{address: "1734D", hex_code: "37170F"},
+                //3. background
+                Patch{address: "17350", hex_code: "281808"},
+            ],
+        },
+        PatchSet {
+            name: "Pepto",
+            theme_set: vec![ThemeSet::All, ThemeSet::Crafted, ThemeSet::ColorTheory(Monochrome)],
+            saturation_flip_safe: false,
+            patches: vec![
+                //1. seems nothing
+                //Patch{address: "1734A", hex_code: "271707"},
+                //2. seems nothing
+                //Patch{address: "1734D", hex_code: "37170F"},
+                //3. background
+                Patch{address: "17350", hex_code: "342515"},
+            ],
+        },
+        PatchSet {
+            name: "Shadow",
+            theme_set: vec![ThemeSet::All, ThemeSet::Crafted, ThemeSet::ColorTheory(Complementary)],
+            saturation_flip_safe: false,
+            patches: vec![
+                //1. seems nothing
+                //Patch{address: "1734A", hex_code: "271707"},
+                //2. seems nothing
+                //Patch{address: "1734D", hex_code: "37170F"},
+                //3. background
+                Patch{address: "17350", hex_code: "170701"},
+            ],
+        },
+        PatchSet {
+            name: "Spacey",
+            theme_set: vec![ThemeSet::All, ThemeSet::Crafted, ThemeSet::ColorTheory(Triad)],
+            saturation_flip_safe: false,
+            patches: vec![
+                //1. seems nothing
+                //Patch{address: "1734A", hex_code: "271707"},
+                //2. seems nothing
+                //Patch{address: "1734D", hex_code: "37170F"},
+                //3. background
+                Patch{address: "17350", hex_code: "392105"},
+            ],
+        },
+    ] )
 }
 
-fn get_a5() -> Vec<Vec<Patch>>{
+
+
+fn get_a5() -> (&'static str, Vec<PatchSet>){
+    ("a5", //test on 16, 0F
     vec![
-        //vanilla
-        vec![
-            //1. blue orb background
-            Patch{address: "1736E", hex_code: "311202"},
-            //2. volcano center, also it seems like save room tiles
-            Patch{address: "17371", hex_code: "351505"},
-            //3. background
-            Patch{address: "17374", hex_code: "301000"},
-            // the floor hexes in the overworld are shared with
-            // the crates for some reason, we still load volcano color
-            // does something use that?
-        ],
-    ]
+        PatchSet {
+            name: "Vanilla",
+            theme_set: vec![ThemeSet::All, ThemeSet::Vanilla],
+            saturation_flip_safe: false,
+            patches: vec![
+                //1. blue orb background
+                Patch{address: "1736E", hex_code: "311202"},
+                //2. volcano center, also it seems like save room tiles
+                Patch{address: "17371", hex_code: "351505"},
+                //3. background
+                Patch{address: "17374", hex_code: "301000"},
+                // the floor hexes in the overworld are shared with
+                // the crates for some reason, we still load volcano color
+                // does something use that?
+            ],
+        },
+        PatchSet {
+            name: "Sunset",
+            theme_set: vec![ThemeSet::All, ThemeSet::Crafted, ThemeSet::ColorTheory(Monochrome)],
+            saturation_flip_safe: false,
+            patches: vec![
+                Patch{address: "1736E", hex_code: "381808"},
+                Patch{address: "17371", hex_code: "281808"},
+                Patch{address: "17374", hex_code: "373828"},
+            ],
+        },
+        PatchSet {
+            name: "Uranus",
+            theme_set: vec![ThemeSet::All, ThemeSet::Crafted, ThemeSet::ColorTheory(Complementary)],
+            saturation_flip_safe: false,
+            patches: vec![
+                Patch{address: "1736E", hex_code: "241505"},
+                Patch{address: "17371", hex_code: "251505"},
+                Patch{address: "17374", hex_code: "2B3A1B"},
+            ],
+        },
+        PatchSet {
+            name: "RGB",
+            theme_set: vec![ThemeSet::All, ThemeSet::Crafted, ThemeSet::ColorTheory(Triad)],
+            saturation_flip_safe: false,
+            patches: vec![
+                Patch{address: "1736E", hex_code: "3A2A0A"},
+                Patch{address: "17371", hex_code: "261606"},
+                Patch{address: "17374", hex_code: "221202"},
+            ],
+        },
+
+    ])
 }
 
 
-*/
+fn move_a5_floor_color_to_volcano(patcher: &mut Patcher) {
+    //0x17e44 -> "02" will move the palette from 01 to 02 in area 5s floor, replacing the 4 things before it would replace that tile
+    //patcher.add_change("02","17e44");
+    
+    //need three things
+    //first need to set the ground to some completely garbage tile i saw in the rom
+    patcher.add_change("FCFCFCFC02", "17F58");
+    
+    //then i need to set the actual ground to that tile
+    patcher.add_change("8E","16C1B");
+    
+    //then i need to patch the area 5 loading to grab the starfield color instead of the volcano color 
+    patcher.add_change("1C", "16EA4");
+}
 
 fn get_ran_palette(rng: &mut ChaCha8Rng) -> String {
     let colors = vec![

@@ -24,8 +24,12 @@ pub struct HueOptions {
 impl Default for HueOptions {
     fn default() -> Self {
         HueOptions {
-            rotate_hue: false,
-            flip_saturation: SaturationOptions::None,
+            // rotate_hue: false,
+            // flip_saturation: SaturationOptions::None,
+
+            rotate_hue: true,
+            flip_saturation: SaturationOptions::Safe,
+
         }
     }
 }
@@ -41,7 +45,7 @@ impl Default for CorridorConfig {
         CorridorConfig {
             shuffle_skies: true,
             shuffle_ground: false, //currently jank
-            shuffle_corridors: true,
+            shuffle_corridors: false,
         }
     }
 }
@@ -102,7 +106,7 @@ impl Default for Config {
         Config {
             corridor_config: CorridorConfig::default(),
             qol_hacks: QOLHacks::default(),
-            color_strategy: ColorStrategy::Vanilla(HueOptions::default()),
+            color_strategy: ColorStrategy::All(HueOptions::default()),
             boss_config: BossConfig::default(),
             log: true,
             seed: rng_seed,

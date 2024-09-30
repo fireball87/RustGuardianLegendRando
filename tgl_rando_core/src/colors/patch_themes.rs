@@ -848,6 +848,9 @@ fn move_a5_floor_color_to_volcano(patcher: &mut Patcher) {
     
     //then i need to patch the area 5 loading to grab the starfield color instead of the volcano color 
     patcher.add_change("1C", "16EA4");
+    
+    //patch the saveroom too since it hits volcano
+    patcher.add_change("0407","16EB3");
 }
 
 fn get_ran_palette(rng: &mut ChaCha8Rng) -> String {

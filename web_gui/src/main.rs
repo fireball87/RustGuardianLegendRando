@@ -3,7 +3,6 @@ use tgl_rando_core::config::*;
 use tgl_rando_core::patcher::Patcher;
 use tgl_rando_core::{generate, seed};
 
-
 fn main() {
     // launch the web app
     launch(app);
@@ -25,7 +24,6 @@ fn app() -> Element {
     let qol_cfg = use_signal(QOLHacks::default);
     let color_cfg = use_signal(|| ColorStrategy::All(HueOptions::default()));
     let hue_cfg = use_signal(HueOptions::default);
-
 
     rsx! {
         div {
@@ -277,9 +275,6 @@ fn qol_hacks(c: Signal<QOLHacks>) -> Element {
     }
 }
 
-
-
-
 #[component]
 fn color_config(c: Signal<ColorStrategy>, h: Signal<HueOptions>) -> Element {
     rsx! {
@@ -313,7 +308,6 @@ fn color_config(c: Signal<ColorStrategy>, h: Signal<HueOptions>) -> Element {
 }
 #[component]
 fn hue_config(c: Signal<ColorStrategy>, h: Signal<HueOptions>) -> Element {
-
     rsx! {
         input {
             r#type: "checkbox",
@@ -363,12 +357,6 @@ fn hue_config(c: Signal<ColorStrategy>, h: Signal<HueOptions>) -> Element {
         br {}
     }
 }
-
-
-
-
-
-
 
 pub fn patch_file(name: &str, content: &Vec<u8>, cfg: Config) {
     let patcher = setup(&cfg);

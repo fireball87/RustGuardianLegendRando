@@ -34,14 +34,15 @@ struct PatchSet {
 pub fn patch_all(cfg: &Config, patcher: &mut Patcher, rng: &mut ChaCha8Rng) {
     match &cfg.color_strategy {
         Vanilla(hue) => {
-            if(hue.rotate_hue || hue.flip_saturation != SaturationOptions::None){
-                move_a5_floor_color_to_volcano(patcher);
+            if(!hue.rotate_hue && hue.flip_saturation == SaturationOptions::None){
+                return;
             }
         }
         _ => {
-            move_a5_floor_color_to_volcano(patcher);
         }
     }
+    move_a5_floor_color_to_volcano(patcher);
+
     let areas = [
         get_c0(),
         get_a0(), get_a1(), get_a3(), get_a5(), get_a7(), get_a9()  
@@ -105,23 +106,23 @@ fn patch_single_area(
     let flip = rng.gen_range(0..=1);
     let shift_distance = rng.gen_range(0..=11);
     let flip_allowed;
-    let flip_safe;
+    let mode_all;
     match hue_options.flip_saturation {
         SaturationOptions::None => {
             flip_allowed = false;
-            flip_safe = false;
+            mode_all = false;
         }
         SaturationOptions::Safe => {
             flip_allowed = true;
-            flip_safe = true;
+            mode_all = false;
         }
         SaturationOptions::All => {
             flip_allowed = true;
-            flip_safe = true;
+            mode_all = true;
         }
     }
     let mut should_flip = false;
-    if flip == 1 && flip_allowed && (!flip_safe || selected.saturation_flip_safe) {
+    if flip == 1 && flip_allowed && (mode_all || selected.saturation_flip_safe) {
         should_flip = true;
     }
 

@@ -3,34 +3,6 @@ use tgl_rando_core::config::*;
 use tgl_rando_core::patcher::Patcher;
 use tgl_rando_core::{generate, seed};
 
-/*
-#[derive(Props, PartialEq, Clone)]
-pub struct HueOptionsWrapper {
-    c: config::HueOptions
-}
-
-impl Default for HueOptionsWrapper {
-    fn default() -> Self {
-        HueOptionsWrapper
-        {
-            c: config::HueOptions::default()
-        }
-    }
-}
-
-
-#[derive(Props, PartialEq, Clone)]
-pub struct QOLHacksWrapper {
-    c: config::QOLHacks
-}
-
-impl Default for QOLHacksWrapper {
-    fn default() -> Self {
-        QOLHacksWrapper {
-            c: config::QOLHacks::default()
-        }
-    }
-}*/
 
 fn main() {
     // launch the web app
@@ -51,6 +23,9 @@ fn app() -> Element {
     let corridor_cfg = use_signal(CorridorConfig::default);
     let boss_cfg = use_signal(BossConfig::default);
     let qol_cfg = use_signal(QOLHacks::default);
+    let color_cfg = use_signal(|| ColorStrategy::All(HueOptions::default()));
+    let hue_cfg = use_signal(HueOptions::default);
+
 
     rsx! {
         div {
@@ -78,16 +53,23 @@ fn app() -> Element {
             corridor_config { c: corridor_cfg }
             boss_config { c: boss_cfg }
             qol_hacks { c: qol_cfg }
+            color_config { c: color_cfg, h: hue_cfg }
             button {
                 disabled: uploaded().is_empty(),
                 onclick: move |_| {
+                    let colors = match color_cfg() {
+                        ColorStrategy::Vanilla(_) => ColorStrategy::Vanilla(hue_cfg()),
+                        ColorStrategy::All(_) => ColorStrategy::All(hue_cfg()),
+                        ColorStrategy::Random => ColorStrategy::Random,
+                        ColorStrategy::ColorTheory(_) => ColorStrategy::ColorTheory(hue_cfg()),
+                    };
                     patch_file(
                         "tgl_rando.nes",
                         &(uploaded.read()),
                         Config {
                             corridor_config: corridor_cfg(),
                             qol_hacks: qol_cfg(),
-                            color_strategy: ColorStrategy::Vanilla(HueOptions::default()),
+                            color_strategy: colors,
                             boss_config: boss_cfg(),
                             log: false,
                             seed: seed::make_seed(),
@@ -113,11 +95,10 @@ fn corridor_config(c: Signal<CorridorConfig>) -> Element {
                 checked: c().shuffle_corridors,
                 id: "shuffleCorridors",
                 oninput: move |event| {
-                    c
-                        .set(CorridorConfig {
-                            shuffle_corridors: event.value().parse().unwrap(),
-                            ..c()
-                        })
+                    c.set(CorridorConfig {
+                        shuffle_corridors: event.value().parse().unwrap(),
+                        ..c()
+                    })
                 }
             }
             label { "for": "shuffleCorridors", "Shuffle Corridors" }
@@ -128,11 +109,10 @@ fn corridor_config(c: Signal<CorridorConfig>) -> Element {
                 checked: c().shuffle_ground,
                 id: "shuffle_ground",
                 oninput: move |event| {
-                    c
-                        .set(CorridorConfig {
-                            shuffle_ground: event.value().parse().unwrap(),
-                            ..c()
-                        })
+                    c.set(CorridorConfig {
+                        shuffle_ground: event.value().parse().unwrap(),
+                        ..c()
+                    })
                 }
             }
             label { "for": "shuffleGround", "Shuffle Ground !!!Currently Broken!!!" }
@@ -143,11 +123,10 @@ fn corridor_config(c: Signal<CorridorConfig>) -> Element {
                 checked: c().shuffle_skies,
                 id: "shuffle_skies",
                 oninput: move |event| {
-                    c
-                        .set(CorridorConfig {
-                            shuffle_skies: event.value().parse().unwrap(),
-                            ..c()
-                        })
+                    c.set(CorridorConfig {
+                        shuffle_skies: event.value().parse().unwrap(),
+                        ..c()
+                    })
                 }
             }
             label { "for": "shuffleSkies", "Shuffle Air Enemy Spawns" }
@@ -171,11 +150,10 @@ fn boss_config(c: Signal<BossConfig>) -> Element {
                 checked: c().shuffle_bosses,
                 id: "shuffle_bosses",
                 oninput: move |event| {
-                    c
-                        .set(BossConfig {
-                            shuffle_bosses: event.value().parse().unwrap(),
-                            ..c()
-                        })
+                    c.set(BossConfig {
+                        shuffle_bosses: event.value().parse().unwrap(),
+                        ..c()
+                    })
                 }
             }
             label { "for": "shuffle_bosses", "Shuffle Bosses" }
@@ -186,11 +164,10 @@ fn boss_config(c: Signal<BossConfig>) -> Element {
                 checked: c().shuffle_final_boss,
                 id: "shuffle_final_boss",
                 oninput: move |event| {
-                    c
-                        .set(BossConfig {
-                            shuffle_final_boss: event.value().parse().unwrap(),
-                            ..c()
-                        })
+                    c.set(BossConfig {
+                        shuffle_final_boss: event.value().parse().unwrap(),
+                        ..c()
+                    })
                 }
             }
             label { "for": "shuffle_final_boss", "Shuffle Final Boss (if shuffling bosses)" }
@@ -201,11 +178,10 @@ fn boss_config(c: Signal<BossConfig>) -> Element {
                 checked: c().rebalance_bosses,
                 id: "rebalance_bosses",
                 oninput: move |event| {
-                    c
-                        .set(BossConfig {
-                            rebalance_bosses: event.value().parse().unwrap(),
-                            ..c()
-                        })
+                    c.set(BossConfig {
+                        rebalance_bosses: event.value().parse().unwrap(),
+                        ..c()
+                    })
                 }
             }
             label { "for": "rebalance_bosses",
@@ -218,11 +194,10 @@ fn boss_config(c: Signal<BossConfig>) -> Element {
                 checked: c().randomize_boss_health,
                 id: "randomize_boss_health",
                 oninput: move |event| {
-                    c
-                        .set(BossConfig {
-                            randomize_boss_health: event.value().parse().unwrap(),
-                            ..c()
-                        })
+                    c.set(BossConfig {
+                        randomize_boss_health: event.value().parse().unwrap(),
+                        ..c()
+                    })
                 }
             }
             label { "for": "randomize_boss_health",
@@ -248,11 +223,10 @@ fn qol_hacks(c: Signal<QOLHacks>) -> Element {
                 checked: c().faster_starting_fire,
                 id: "faster_starting_fire",
                 oninput: move |event| {
-                    c
-                        .set(QOLHacks {
-                            faster_starting_fire: event.value().parse().unwrap(),
-                            ..c()
-                        })
+                    c.set(QOLHacks {
+                        faster_starting_fire: event.value().parse().unwrap(),
+                        ..c()
+                    })
                 }
             }
             label { "for": "faster_starting_fire", "Increase Starting Fire Rate" }
@@ -263,11 +237,10 @@ fn qol_hacks(c: Signal<QOLHacks>) -> Element {
                 checked: c().fix_hyper_laser,
                 id: "fix_hyper_laser",
                 oninput: move |event| {
-                    c
-                        .set(QOLHacks {
-                            fix_hyper_laser: event.value().parse().unwrap(),
-                            ..c()
-                        })
+                    c.set(QOLHacks {
+                        fix_hyper_laser: event.value().parse().unwrap(),
+                        ..c()
+                    })
                 }
             }
             label { "for": "fix_hyper_laser", "Buff Hyperlaser Damage" }
@@ -278,11 +251,10 @@ fn qol_hacks(c: Signal<QOLHacks>) -> Element {
                 checked: c().enemy_erasers_unlocked_from_start,
                 id: "enemy_erasers_unlocked_from_start",
                 oninput: move |event| {
-                    c
-                        .set(QOLHacks {
-                            enemy_erasers_unlocked_from_start: event.value().parse().unwrap(),
-                            ..c()
-                        })
+                    c.set(QOLHacks {
+                        enemy_erasers_unlocked_from_start: event.value().parse().unwrap(),
+                        ..c()
+                    })
                 }
             }
             label { "for": "enemy_erasers_unlocked_from_start", "Unlock Enemy Eraser Drops At Game Start" }
@@ -293,11 +265,10 @@ fn qol_hacks(c: Signal<QOLHacks>) -> Element {
                 checked: c().remove_flash,
                 id: "remove_flash",
                 oninput: move |event| {
-                    c
-                        .set(QOLHacks {
-                            remove_flash: event.value().parse().unwrap(),
-                            ..c()
-                        })
+                    c.set(QOLHacks {
+                        remove_flash: event.value().parse().unwrap(),
+                        ..c()
+                    })
                 }
             }
             label { "for": "remove_flash", "Remove Flashing (enemy erasers and boss kills)" }
@@ -305,6 +276,99 @@ fn qol_hacks(c: Signal<QOLHacks>) -> Element {
         }
     }
 }
+
+
+
+
+#[component]
+fn color_config(c: Signal<ColorStrategy>, h: Signal<HueOptions>) -> Element {
+    rsx! {
+        div {
+            h3 { "Color Config" }
+        }
+        select {
+            id: "theme",
+            oninput: move |event| {
+                match &*event.value() {
+                    "All" => c.set(ColorStrategy::All(h())),
+                    "ColorTheory" => c.set(ColorStrategy::ColorTheory(h())),
+                    "Vanilla" => c.set(ColorStrategy::Vanilla(h())),
+                    "Random" => c.set(ColorStrategy::Random),
+                    _ => {}
+                }
+            },
+            optgroup { label: "Themed",
+                option { value: "All", label: "All", selected: matches!(c(), ColorStrategy::All(_)) }
+                option { value: "ColorTheory", label: "ColorTheory", selected: matches!(c(), ColorStrategy::ColorTheory(_)) }
+                option { value: "Vanilla", label: "Vanilla", selected: matches!(c(), ColorStrategy::Vanilla(_)) }
+            }
+            optgroup { label: "Eye Bleed",
+                option { value: "Random", label: "Random", selected: matches!(c(), ColorStrategy::Random) }
+            }
+        }
+        label { "for": "theme", "Recolor Mode" }
+        br {}
+        hue_config { c, h }
+    }
+}
+#[component]
+fn hue_config(c: Signal<ColorStrategy>, h: Signal<HueOptions>) -> Element {
+
+    rsx! {
+        input {
+            r#type: "checkbox",
+            checked: h().rotate_hue,
+            id: "rotate_hue",
+            disabled: c() == ColorStrategy::Random,
+            oninput: move |event| {
+                h.set(HueOptions {
+                    rotate_hue: event.value().parse().unwrap(),
+                    ..h()
+                })
+            }
+        }
+        label { "for": "rotate_hue", "Rotate Hue" }
+        br {}
+        select {
+            disabled: c() == ColorStrategy::Random,
+            id: "saturation",
+            oninput: move |event| {
+                match &*event.value() {
+                    "None" => {
+                        h.set(HueOptions {
+                            flip_saturation: SaturationOptions::None,
+                            ..h()
+                        })
+                    }
+                    "Safe" => {
+                        h.set(HueOptions {
+                            flip_saturation: SaturationOptions::Safe,
+                            ..h()
+                        })
+                    }
+                    "All" => {
+                        h.set(HueOptions {
+                            flip_saturation: SaturationOptions::All,
+                            ..h()
+                        })
+                    }
+                    _ => {}
+                }
+            },
+            option { value: "None", label: "None", selected: h().flip_saturation == SaturationOptions::None }
+            option { value: "Safe", label: "Safe", selected: h().flip_saturation == SaturationOptions::Safe }
+            option { value: "All", label: "All", selected: h().flip_saturation == SaturationOptions::All }
+        }
+        label { "for": "theme", "Saturation Flip Mode" }
+        br {}
+    }
+}
+
+
+
+
+
+
 
 pub fn patch_file(name: &str, content: &Vec<u8>, cfg: Config) {
     let patcher = setup(&cfg);

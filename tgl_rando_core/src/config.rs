@@ -25,8 +25,7 @@ impl Default for HueOptions {
     fn default() -> Self {
         HueOptions {
             rotate_hue: true,
-            flip_saturation: SaturationOptions::Safe,
-
+            flip_saturation: SaturationOptions::None,
         }
     }
 }

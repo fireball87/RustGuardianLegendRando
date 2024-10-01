@@ -24,7 +24,7 @@ pub struct HueOptions {
 impl Default for HueOptions {
     fn default() -> Self {
         HueOptions {
-            rotate_hue: false,
+            rotate_hue: true,
             flip_saturation: SaturationOptions::None,
         }
     }
@@ -102,7 +102,7 @@ impl Default for Config {
         Config {
             corridor_config: CorridorConfig::default(),
             qol_hacks: QOLHacks::default(),
-            color_strategy: ColorStrategy::Vanilla(HueOptions::default()),
+            color_strategy: ColorStrategy::All(HueOptions::default()),
             boss_config: BossConfig::default(),
             log: true,
             seed: rng_seed,

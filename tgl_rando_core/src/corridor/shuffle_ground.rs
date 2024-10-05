@@ -300,13 +300,13 @@ fn tokenize_corridor(
         }
 
         // Lock c0 cannons
-        if corridor_number == 0 && entry.time == "074E" {
+        if corridor_number == 0
+            && (entry.time == "074E"
+                || i32::from_str_radix(&entry.time, 16).unwrap()
+                    <= i32::from_str_radix(&"04BA", 16).unwrap())
+        {
             entry.locked = true;
         }
-
-        /*if corridor_number == 7 && entry.time == "01B8" {
-            entry.locked = true;
-        }*/
 
         return_array.push(entry);
         if set_last_c6 {
@@ -426,14 +426,16 @@ fn shuffle_individual_corridor_internals(input_array: &mut Vec<TokenEntry>, rng:
         let mut time = 0;
         let section_time = u16::from_str_radix(&section.time, 16).unwrap();
         for entry in &section.entries {
+            let mut cloned_entry = entry.clone();
             while input_array[index].command != "06" || input_array[index].locked {
                 index += 1;
             }
             let entry_time = format!("{:04X}", section_time + time);
-            input_array[index].time = entry_time.clone();
+            cloned_entry.time = entry_time;
             if let Some(time_to_next) = &entry.time_to_next {
                 time += u16::from_str_radix(time_to_next, 16).unwrap();
             }
+            input_array[index] = cloned_entry;
             index += 1;
         }
     }

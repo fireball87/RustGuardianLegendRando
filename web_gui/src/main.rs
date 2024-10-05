@@ -27,6 +27,11 @@ fn app() -> Element {
 
     rsx! {
         div {
+            corridor_config { c: corridor_cfg }
+            boss_config { c: boss_cfg }
+            qol_hacks { c: qol_cfg }
+            color_config { c: color_cfg, h: hue_cfg }
+            h3 { "Generate" }
             input {
                 // tell the input to pick a file
                 r#type: "file",
@@ -34,6 +39,8 @@ fn app() -> Element {
                 accept: ".rom,.nes,.bin",
                 // pick multiple files
                 multiple: false,
+                id: "romSelect",
+
                 onchange: move |evt| {
                     async move {
                         if let Some(file_engine) = &evt.files() {
@@ -48,10 +55,8 @@ fn app() -> Element {
                     }
                 }
             }
-            corridor_config { c: corridor_cfg }
-            boss_config { c: boss_cfg }
-            qol_hacks { c: qol_cfg }
-            color_config { c: color_cfg, h: hue_cfg }
+            label { "for": "romSelect", "Select Base Rom" }
+            br {}
             button {
                 disabled: uploaded().is_empty(),
                 onclick: move |_| {
@@ -76,6 +81,8 @@ fn app() -> Element {
                 },
                 "Generate"
             }
+            br {}
+            br {}
         }
     }
 }
@@ -113,7 +120,7 @@ fn corridor_config(c: Signal<CorridorConfig>) -> Element {
                     })
                 }
             }
-            label { "for": "shuffleGround", "Shuffle Ground !!!Currently Broken!!!" }
+            label { "for": "shuffleGround", "Shuffle Ground !!Needs Testing!!" }
             br {}
 
             input {

@@ -40,8 +40,8 @@ impl Default for CorridorConfig {
     fn default() -> Self {
         CorridorConfig {
             shuffle_skies: true,
-            shuffle_ground: false, //currently jank
-            shuffle_corridors: true,
+            shuffle_ground: true,
+            shuffle_corridors: false,
         }
     }
 }

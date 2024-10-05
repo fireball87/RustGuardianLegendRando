@@ -41,7 +41,7 @@ impl Default for CorridorConfig {
         CorridorConfig {
             shuffle_skies: true,
             shuffle_ground: true,
-            shuffle_corridors: false,
+            shuffle_corridors: true,
         }
     }
 }

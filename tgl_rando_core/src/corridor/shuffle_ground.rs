@@ -300,12 +300,13 @@ fn tokenize_corridor(
         }
 
         // Lock c0 cannons
-        if corridor_number == 0 && (entry.time == "074E" ||
-            i32::from_str_radix(&entry.time, 16).unwrap() <= i32::from_str_radix(&"04BA", 16).unwrap()
-        ){
+        if corridor_number == 0
+            && (entry.time == "074E"
+                || i32::from_str_radix(&entry.time, 16).unwrap()
+                    <= i32::from_str_radix(&"04BA", 16).unwrap())
+        {
             entry.locked = true;
         }
-        
 
         return_array.push(entry);
         if set_last_c6 {

@@ -22,7 +22,7 @@ fn app() -> Element {
     let corridor_cfg = use_signal(CorridorConfig::default);
     let boss_cfg = use_signal(BossConfig::default);
     let qol_cfg = use_signal(QOLHacks::default);
-    let color_cfg = use_signal(|| ColorStrategy::All(HueOptions::default()));
+    let color_cfg = use_signal(ColorOptions::default);
     let hue_cfg = use_signal(HueOptions::default);
 
     rsx! {
@@ -60,7 +60,7 @@ fn app() -> Element {
             button {
                 disabled: uploaded().is_empty(),
                 onclick: move |_| {
-                    let colors = match color_cfg() {
+                    let colors = match color_cfg().color_strategy {
                         ColorStrategy::Vanilla(_) => ColorStrategy::Vanilla(hue_cfg()),
                         ColorStrategy::All(_) => ColorStrategy::All(hue_cfg()),
                         ColorStrategy::Random => ColorStrategy::Random,
@@ -72,7 +72,10 @@ fn app() -> Element {
                         Config {
                             corridor_config: corridor_cfg(),
                             qol_hacks: qol_cfg(),
-                            color_strategy: colors,
+                            color_options: ColorOptions {
+                                color_strategy: colors,
+                                ..color_cfg()
+                            },
                             boss_config: boss_cfg(),
                             log: false,
                             seed: seed::make_seed(),
@@ -283,7 +286,7 @@ fn qol_hacks(c: Signal<QOLHacks>) -> Element {
 }
 
 #[component]
-fn color_config(c: Signal<ColorStrategy>, h: Signal<HueOptions>) -> Element {
+fn color_config(c: Signal<ColorOptions>, h: Signal<HueOptions>) -> Element {
     rsx! {
         div {
             h3 { "Color Config" }
@@ -292,35 +295,68 @@ fn color_config(c: Signal<ColorStrategy>, h: Signal<HueOptions>) -> Element {
             id: "theme",
             oninput: move |event| {
                 match &*event.value() {
-                    "All" => c.set(ColorStrategy::All(h())),
-                    "ColorTheory" => c.set(ColorStrategy::ColorTheory(h())),
-                    "Vanilla" => c.set(ColorStrategy::Vanilla(h())),
-                    "Random" => c.set(ColorStrategy::Random),
+                    "All" => {
+                        c.set(ColorOptions {
+                            color_strategy: ColorStrategy::All(h()),
+                            ..c()
+                        })
+                    }
+                    "ColorTheory" => {
+                        c.set(ColorOptions {
+                            color_strategy: ColorStrategy::ColorTheory(h()),
+                            ..c()
+                        })
+                    }
+                    "Vanilla" => {
+                        c.set(ColorOptions {
+                            color_strategy: ColorStrategy::Vanilla(h()),
+                            ..c()
+                        })
+                    }
+                    "Random" => {
+                        c.set(ColorOptions {
+                            color_strategy: ColorStrategy::Random,
+                            ..c()
+                        })
+                    }
                     _ => {}
                 }
             },
             optgroup { label: "Themed",
-                option { value: "All", label: "All", selected: matches!(c(), ColorStrategy::All(_)) }
-                option { value: "ColorTheory", label: "ColorTheory", selected: matches!(c(), ColorStrategy::ColorTheory(_)) }
-                option { value: "Vanilla", label: "Vanilla", selected: matches!(c(), ColorStrategy::Vanilla(_)) }
+                option { value: "All", label: "All", selected: matches!(c().color_strategy, ColorStrategy::All(_)) }
+                option { value: "ColorTheory", label: "ColorTheory", selected: matches!(c().color_strategy, ColorStrategy::ColorTheory(_)) }
+                option { value: "Vanilla", label: "Vanilla", selected: matches!(c().color_strategy, ColorStrategy::Vanilla(_)) }
             }
             optgroup { label: "Eye Bleed",
-                option { value: "Random", label: "Random", selected: matches!(c(), ColorStrategy::Random) }
+                option { value: "Random", label: "Random", selected: matches!(c().color_strategy, ColorStrategy::Random) }
             }
         }
         label { "for": "theme", "Recolor Mode" }
         br {}
         hue_config { c, h }
+        input {
+            r#type: "checkbox",
+            checked: c().include_foreground,
+            id: "include_foreground",
+            oninput: move |event| {
+                c.set(ColorOptions {
+                    include_foreground: event.value().parse().unwrap(),
+                    ..c()
+                })
+            }
+        }
+        label { "for": "include_foreground", "Recolor Foreground Objects Too" }
+        br {}
     }
 }
 #[component]
-fn hue_config(c: Signal<ColorStrategy>, h: Signal<HueOptions>) -> Element {
+fn hue_config(c: Signal<ColorOptions>, h: Signal<HueOptions>) -> Element {
     rsx! {
         input {
             r#type: "checkbox",
             checked: h().rotate_hue,
             id: "rotate_hue",
-            disabled: c() == ColorStrategy::Random,
+            disabled: c().color_strategy == ColorStrategy::Random,
             oninput: move |event| {
                 h.set(HueOptions {
                     rotate_hue: event.value().parse().unwrap(),
@@ -331,7 +367,7 @@ fn hue_config(c: Signal<ColorStrategy>, h: Signal<HueOptions>) -> Element {
         label { "for": "rotate_hue", "Rotate Hue" }
         br {}
         select {
-            disabled: c() == ColorStrategy::Random,
+            disabled: c().color_strategy == ColorStrategy::Random,
             id: "saturation",
             oninput: move |event| {
                 match &*event.value() {

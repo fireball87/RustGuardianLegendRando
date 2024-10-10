@@ -267,7 +267,7 @@ impl Map {
         }
     }
 
-    fn print_areas(&self) {
+    fn _print_areas(&self) {
         for row in self.data.rows() {
             for item in row.iter() {
                 match item.area {

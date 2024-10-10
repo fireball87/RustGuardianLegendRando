@@ -303,7 +303,7 @@ fn tokenize_corridor(
         if corridor_number == 0
             && (entry.time == "074E"
                 || i32::from_str_radix(&entry.time, 16).unwrap()
-                    <= i32::from_str_radix(&"04BA", 16).unwrap())
+                    <= i32::from_str_radix("04BA", 16).unwrap())
         {
             entry.locked = true;
         }

@@ -10,6 +10,21 @@ pub enum ColorStrategy {
 }
 
 #[derive(PartialEq, Eq, Clone)]
+pub struct ColorOptions {
+    pub color_strategy: ColorStrategy,
+    pub include_foreground: bool,
+}
+
+impl Default for ColorOptions {
+    fn default() -> Self {
+        ColorOptions {
+            color_strategy: ColorStrategy::All(HueOptions::default()),
+            include_foreground: true,
+        }
+    }
+}
+
+#[derive(PartialEq, Eq, Clone)]
 pub enum SaturationOptions {
     None,
     Safe,
@@ -89,7 +104,7 @@ pub struct Config {
     pub corridor_config: CorridorConfig,
     pub qol_hacks: QOLHacks,
     // pub bad_ideas: BadIdeas,
-    pub color_strategy: ColorStrategy,
+    pub color_options: ColorOptions,
     pub boss_config: BossConfig,
     pub log: bool,
     pub seed: String,
@@ -102,7 +117,7 @@ impl Default for Config {
         Config {
             corridor_config: CorridorConfig::default(),
             qol_hacks: QOLHacks::default(),
-            color_strategy: ColorStrategy::All(HueOptions::default()),
+            color_options: ColorOptions::default(),
             boss_config: BossConfig::default(),
             log: true,
             seed: rng_seed,

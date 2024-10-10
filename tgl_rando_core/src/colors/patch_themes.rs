@@ -32,7 +32,7 @@ struct PatchSet {
     saturation_flip_safe: bool,
 }
 pub fn patch_all(cfg: &Config, patcher: &mut Patcher, rng: &mut ChaCha8Rng) {
-    match &cfg.color_strategy {
+    match &cfg.color_options.color_strategy {
         Vanilla(hue) => {
             if (!hue.rotate_hue && hue.flip_saturation == SaturationOptions::None) {
                 return;
@@ -42,7 +42,7 @@ pub fn patch_all(cfg: &Config, patcher: &mut Patcher, rng: &mut ChaCha8Rng) {
     }
     move_a5_floor_color_to_volcano(patcher);
 
-    let areas = [
+    let mut areas = vec![
         get_c0(),
         get_a0(),
         get_a1(),
@@ -51,6 +51,12 @@ pub fn patch_all(cfg: &Config, patcher: &mut Patcher, rng: &mut ChaCha8Rng) {
         get_a7(),
         get_a9(),
     ];
+
+    let foreground = vec![get_foreground_title(), get_foreground_enemies()];
+
+    if cfg.color_options.include_foreground {
+        areas.extend(foreground);
+    };
 
     for area in areas {
         pick_level(area.0, area.1, rng, patcher, cfg)
@@ -64,7 +70,7 @@ fn pick_level(
     patcher: &mut Patcher,
     cfg: &Config,
 ) {
-    let strategy = &cfg.color_strategy;
+    let strategy = &cfg.color_options.color_strategy;
     match strategy {
         ColorStrategy::Vanilla(hue) => {
             let index = 0;
@@ -210,6 +216,166 @@ fn shift_single_color_hue(color: &str, distance: usize) -> String {
     }
 }
 
+fn get_foreground_enemies() -> (&'static str, Vec<PatchSet>) {
+    (
+        "enemies",
+        vec![PatchSet {
+            name: "Vanilla",
+            theme_set: vec![ThemeSet::All, ThemeSet::Vanilla],
+            saturation_flip_safe: false,
+            patches: vec![
+                Patch {
+                    // player and red white black
+                    address: "1731A",
+                    hex_code: "30160F",
+                },
+                Patch {
+                    // white orange red
+                    address: "1731D",
+                    hex_code: "302706",
+                },
+                Patch {
+                    //white blue
+                    address: "17320",
+                    hex_code: "31210F",
+                },
+                Patch {
+                    //white green
+                    address: "17323",
+                    hex_code: "30290F",
+                },
+            ],
+        }],
+    )
+}
+
+fn get_foreground_title() -> (&'static str, Vec<PatchSet>) {
+    (
+        "title",
+        vec![
+            PatchSet {
+                name: "Vanilla",
+                theme_set: vec![ThemeSet::All, ThemeSet::Vanilla],
+                saturation_flip_safe: false,
+                patches: vec![
+                    Patch {
+                        // text
+                        address: "17332",
+                        hex_code: "302616",
+                    },
+                    Patch {
+                        //stars
+                        address: "17335",
+                        hex_code: "301201",
+                    },
+                    Patch {
+                        //planet inside (3 should match planet outside probably
+                        address: "17338",
+                        hex_code: "311611",
+                    },
+                    Patch {
+                        //planet outside
+                        address: "1733B",
+                        hex_code: "312111",
+                    },
+                ],
+            },
+            PatchSet {
+                name: "Rust",
+                theme_set: vec![
+                    ThemeSet::All,
+                    ThemeSet::Crafted,
+                    ThemeSet::ColorTheory(ColorTheory::Monochrome),
+                ],
+                saturation_flip_safe: false,
+                patches: vec![
+                    Patch {
+                        // text
+                        address: "17332",
+                        hex_code: "071727",
+                    },
+                    Patch {
+                        //stars and text
+                        address: "17335",
+                        hex_code: "383727",
+                    },
+                    Patch {
+                        //planet inside (3 should match planet outside probably
+                        address: "17338",
+                        hex_code: "371707",
+                    },
+                    Patch {
+                        //planet outside
+                        address: "1733B",
+                        hex_code: "271707",
+                    },
+                ],
+            },
+            PatchSet {
+                name: "Asteroid",
+                theme_set: vec![
+                    ThemeSet::All,
+                    ThemeSet::Crafted,
+                    ThemeSet::ColorTheory(ColorTheory::Complementary),
+                ],
+                saturation_flip_safe: false,
+                patches: vec![
+                    Patch {
+                        // text
+                        address: "17332",
+                        hex_code: "311101",
+                    },
+                    Patch {
+                        //stars and text
+                        address: "17335",
+                        hex_code: "372717",
+                    },
+                    Patch {
+                        //planet inside (3 should match planet outside probably
+                        address: "17338",
+                        hex_code: "312701",
+                    },
+                    Patch {
+                        //planet outside
+                        address: "1733B",
+                        hex_code: "112101",
+                    },
+                ],
+            },
+            PatchSet {
+                name: "Christmas Planet",
+                theme_set: vec![
+                    ThemeSet::All,
+                    ThemeSet::Crafted,
+                    ThemeSet::ColorTheory(ColorTheory::Triad),
+                ],
+                saturation_flip_safe: false,
+                patches: vec![
+                    Patch {
+                        // text
+                        address: "17332",
+                        hex_code: "3A1A0A",
+                    },
+                    Patch {
+                        //stars and text
+                        address: "17335",
+                        hex_code: "322202",
+                    },
+                    Patch {
+                        //planet inside (3 should match planet outside probably
+                        address: "17338",
+                        hex_code: "3A2A06",
+                    },
+                    Patch {
+                        //planet outside
+                        address: "1733B",
+                        hex_code: "261606",
+                    },
+                ],
+            },
+        ],
+    )
+}
 fn get_c0() -> (&'static str, Vec<PatchSet>) {
     //patch c0
     // 0x17344 -> 1c,0c,16

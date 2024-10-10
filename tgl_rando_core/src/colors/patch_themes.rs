@@ -32,13 +32,10 @@ struct PatchSet {
     saturation_flip_safe: bool,
 }
 pub fn patch_all(cfg: &Config, patcher: &mut Patcher, rng: &mut ChaCha8Rng) {
-    match &cfg.color_options.color_strategy {
-        Vanilla(hue) => {
-            if (!hue.rotate_hue && hue.flip_saturation == SaturationOptions::None) {
-                return;
-            }
+    if let Vanilla(hue) = &cfg.color_options.color_strategy {
+        if !hue.rotate_hue && hue.flip_saturation == SaturationOptions::None {
+            return;
         }
-        _ => {}
     }
     move_a5_floor_color_to_volcano(patcher);
 

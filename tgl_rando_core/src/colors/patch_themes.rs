@@ -52,7 +52,11 @@ pub fn patch_all(cfg: &Config, patcher: &mut Patcher, rng: &mut ChaCha8Rng) {
         get_a9(),
     ];
 
-    let foreground = vec![get_foreground_title(), get_foreground_enemies()];
+    let foreground = vec![
+        get_foreground_title(),
+        get_foreground_enemies(),
+        get_final_boss_foreground(),
+    ];
 
     if cfg.color_options.include_foreground {
         areas.extend(foreground);
@@ -221,7 +225,11 @@ fn get_foreground_enemies() -> (&'static str, Vec<PatchSet>) {
         "enemies",
         vec![PatchSet {
             name: "Vanilla",
-            theme_set: vec![ThemeSet::All, ThemeSet::Vanilla],
+            theme_set: vec![
+                ThemeSet::All,
+                ThemeSet::Vanilla,
+                ThemeSet::ColorTheory(Triad),
+            ],
             saturation_flip_safe: false,
             patches: vec![
                 Patch {
@@ -243,6 +251,43 @@ fn get_foreground_enemies() -> (&'static str, Vec<PatchSet>) {
                     //white green
                     address: "17323",
                     hex_code: "30290F",
+                },
+            ],
+        }],
+    )
+}
+
+fn get_final_boss_foreground() -> (&'static str, Vec<PatchSet>) {
+    (
+        "final",
+        vec![PatchSet {
+            name: "Vanilla",
+            theme_set: vec![
+                ThemeSet::All,
+                ThemeSet::Vanilla,
+                ThemeSet::ColorTheory(Complementary),
+            ],
+            saturation_flip_safe: false,
+            patches: vec![
+                Patch {
+                    // player and red white black
+                    address: "1737A",
+                    hex_code: "301606",
+                },
+                Patch {
+                    // white orange red
+                    address: "1737D",
+                    hex_code: "302717",
+                },
+                Patch {
+                    //white blue
+                    address: "17380",
+                    hex_code: "2C1C0C",
+                },
+                Patch {
+                    //white green
+                    address: "17383",
+                    hex_code: "3D1707",
                 },
             ],
         }],

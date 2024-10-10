@@ -495,7 +495,7 @@ impl Generator {
                 let y_pos = &locations[index].0;
                 let x_pos = &locations[index].1;
                 map.data[[*y_pos, *x_pos]].room_type = RoomType::Miniboss;
-                map.data[[*y_pos, *x_pos]].item_id = Some(item.clone().to_string());
+                map.data[[*y_pos, *x_pos]].item_id = Some(item.to_string());
 
                 locations.remove(index);
             } else {

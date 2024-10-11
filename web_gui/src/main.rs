@@ -401,7 +401,7 @@ fn hue_config(c: Signal<ColorOptions>, h: Signal<HueOptions>) -> Element {
     }
 }
 
-pub fn patch_file(name: &str, content: &Vec<u8>, cfg: Config) {
+pub fn patch_file(name: &str, content: &[u8], cfg: Config) {
     let patcher = setup(&cfg);
     let rom = patcher.patch_u8_vec(content);
     trigger_download(name, rom);

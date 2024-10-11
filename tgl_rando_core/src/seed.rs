@@ -1,6 +1,7 @@
 use crate::config::Config;
 use crate::patcher::Patcher;
 use rand::Rng;
+use std::fmt::Write;
 
 const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
                             0123456789";
@@ -18,8 +19,10 @@ pub fn write_seed(patcher: &mut Patcher, config: &Config) {
         let seed_hex: String = seed
             .as_bytes()
             .iter()
-            .map(|byte| format!("{:02x}", byte))
-            .collect();
+            .fold(String::new(), |mut output, byte| {
+                let _ = write!(output, "{byte:02x}");
+                output
+            });
         patcher.add_change("2020202020202020202020", "0855");
 
         patcher.add_change(&seed_hex, "0855");

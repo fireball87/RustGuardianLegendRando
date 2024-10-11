@@ -16,8 +16,8 @@ impl Map {
 
     pub fn write_hex(&self, log: bool) -> String {
         let mut final_hex = String::new();
-        for (_y_pos, row) in self.data.outer_iter().enumerate() {
-            for (_x_pos, item) in row.iter().enumerate() {
+        for (row) in self.data.outer_iter() {
+            for (item) in row.iter() {
                 if !item.accessible {
                     final_hex += "80";
                     //break 1;

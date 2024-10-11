@@ -79,8 +79,8 @@ impl Patcher {
         std::fs::write(filename, hex::decode(patched).unwrap()).expect("Unable to write file");
     }
 
-    pub fn patch_u8_vec(&self, source_data: &Vec<u8>) -> Vec<u8> {
-        let mut patched = source_data.clone();
+    pub fn patch_u8_vec(&self, source_data: &[u8]) -> Vec<u8> {
+        let mut patched = source_data.to_owned();
 
         for change in &self.changes {
             let offset = usize::from_str_radix(&change.offset, 16).unwrap();

@@ -683,11 +683,9 @@ impl Generator {
         for &(y_pos, x_pos) in &ring_rooms {
             if Some(y_pos) == north_y {
                 let distance_away = (north_avg - x_pos as f64).abs();
-                if north_room_distance.is_none() || distance_away < north_room_distance.unwrap() {
-                    north_room = Some((y_pos, x_pos));
-                    north_room_distance = Some(distance_away);
-                } else if (north_avg - x_pos as f64).abs() == north_room_distance.unwrap()
-                    && rng.gen_bool(0.5)
+                if (north_room_distance.is_none() || distance_away < north_room_distance.unwrap())
+                    || ((north_avg - x_pos as f64).abs() == north_room_distance.unwrap()
+                        && rng.gen_bool(0.5))
                 {
                     north_room = Some((y_pos, x_pos));
                     north_room_distance = Some(distance_away);
@@ -696,11 +694,9 @@ impl Generator {
 
             if Some(y_pos) == south_y {
                 let distance_away = (south_avg - x_pos as f64).abs();
-                if south_room_distance.is_none() || distance_away < south_room_distance.unwrap() {
-                    south_room = Some((y_pos, x_pos));
-                    south_room_distance = Some(distance_away);
-                } else if (south_avg - x_pos as f64).abs() == south_room_distance.unwrap()
-                    && rng.gen_bool(0.5)
+                if (south_room_distance.is_none() || distance_away < south_room_distance.unwrap())
+                    || ((south_avg - x_pos as f64).abs() == south_room_distance.unwrap()
+                        && rng.gen_bool(0.5))
                 {
                     south_room = Some((y_pos, x_pos));
                     south_room_distance = Some(distance_away);
@@ -709,11 +705,9 @@ impl Generator {
 
             if Some(x_pos) == west_x {
                 let distance_away = (west_avg - y_pos as f64).abs();
-                if west_room_distance.is_none() || distance_away < west_room_distance.unwrap() {
-                    west_room = Some((y_pos, x_pos));
-                    west_room_distance = Some(distance_away);
-                } else if (west_avg - y_pos as f64).abs() == west_room_distance.unwrap()
-                    && rng.gen_bool(0.5)
+                if (west_room_distance.is_none() || distance_away < west_room_distance.unwrap())
+                    || ((west_avg - y_pos as f64).abs() == west_room_distance.unwrap()
+                        && rng.gen_bool(0.5))
                 {
                     west_room = Some((y_pos, x_pos));
                     west_room_distance = Some(distance_away);
@@ -722,11 +716,9 @@ impl Generator {
 
             if Some(x_pos) == east_x {
                 let distance_away = (east_avg - y_pos as f64).abs();
-                if east_room_distance.is_none() || distance_away < east_room_distance.unwrap() {
-                    east_room = Some((y_pos, x_pos));
-                    east_room_distance = Some(distance_away);
-                } else if (east_avg - y_pos as f64).abs() == east_room_distance.unwrap()
-                    && rng.gen_bool(0.5)
+                if (east_room_distance.is_none() || distance_away < east_room_distance.unwrap())
+                    || ((east_avg - y_pos as f64).abs() == east_room_distance.unwrap()
+                        && rng.gen_bool(0.5))
                 {
                     east_room = Some((y_pos, x_pos));
                     east_room_distance = Some(distance_away);

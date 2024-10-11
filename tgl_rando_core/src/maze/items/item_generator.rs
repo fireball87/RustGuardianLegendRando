@@ -101,11 +101,11 @@ impl ItemGenerator {
         if log {
             println!();
         }
-        for i in 0..=19 {
+        for (i, item) in item_pool.iter().enumerate().take(19 + 1) {
             if log {
-                println!("corridor {} has {}", i + 1, item_pool[i]);
+                println!("corridor {} has {}", i + 1, item);
             }
-            patch_string.push_str(&item_pool[i]);
+            patch_string.push_str(item);
         }
         patcher.add_change(&patch_string, "1EF51");
 

@@ -151,7 +151,12 @@ impl ItemGenerator {
         patcher.add_change(&patch_string, "16077");
 
         let mut patch_string = String::new();
-        for i in pool_size - (multi_shops + 1) + 1..pool_size {
+        for (i, item) in item_pool
+            .iter()
+            .enumerate()
+            .take(pool_size)
+            .skip(pool_size - (multi_shops + 1) + 1)
+        {
             let id = i - (pool_size - (multi_shops + 1)) + 62;
             let desired_area = rng.gen_range(1..=10);
             let price = Self::random_price_for_area(desired_area, rng);
@@ -162,16 +167,13 @@ impl ItemGenerator {
             let rand_item0 = if rng.gen_range(0..=5) <= 2 { 12 } else { 11 };
 
             patch_string.push_str(&flipped_price);
-            patch_string.push_str(&item_pool[i]);
+            patch_string.push_str(&item);
             patch_string.push_str(&format!("{:02X}", rand_item0));
             patch_string.push_str(&format!("{:02X}", rng.gen_range(0..=10)));
             multi_shop_library[desired_area].push(format!("{:02X}", id));
 
             if log {
-                println!(
-                    "big shop {:02X} has {} in area {}",
-                    id, item_pool[i], desired_area
-                );
+                println!("big shop {:02X} has {} in area {}", id, item, desired_area);
             }
         }
 

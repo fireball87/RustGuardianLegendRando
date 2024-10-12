@@ -1,3 +1,4 @@
+use crate::config::Config;
 use crate::patcher::Patcher;
 use rand::prelude::SliceRandom;
 use rand::Rng;
@@ -25,54 +26,33 @@ enum Item {
     RedLander = 17,
 }
 
+pub struct ItemLibrary {
+    pub single_shop_library: Vec<Vec<String>>,
+    pub multi_shop_library: Vec<Vec<String>>,
+    pub item_library: Vec<Vec<String>>,
+}
 pub struct ItemGenerator;
 
 impl ItemGenerator {
-    pub fn prepare_items(
-        patcher: &mut Patcher,
-        multi_shops: usize,
-        single_shops: usize,
-        weapon_size: usize,
-        blue: usize,
-        red: usize,
-        shield: usize,
-        force_shields: bool,
-        guns: usize,
-        rapid_fires: usize,
-        etanks: usize,
-        enemy_erasers: usize,
-        log: bool,
-        rng: &mut ChaCha8Rng,
-    ) -> (Vec<Vec<String>>, Vec<Vec<String>>, Vec<Vec<String>>) {
+    pub fn prepare_items(patcher: &mut Patcher, cfg: &Config, rng: &mut ChaCha8Rng) -> ItemLibrary {
         let mut single_shop_library = vec![vec![]; 11];
         let mut multi_shop_library = vec![vec![]; 11];
         let mut item_library = vec![vec![]; 11];
 
-        let mut item_pool = Self::create_item_pool(
-            weapon_size,
-            blue,
-            red,
-            shield,
-            force_shields,
-            guns,
-            rapid_fires,
-            etanks,
-            enemy_erasers,
-            rng,
-        );
+        let mut item_pool = Self::create_item_pool(cfg, rng);
 
         let pool_size = item_pool.len();
-        for i in 20..=pool_size - (single_shops + multi_shops + 1) {
+        for i in 20..=pool_size - (cfg.map_config.single_shops + cfg.map_config.multi_shops + 1) {
             if !(30..52).contains(&i) {
                 let area = rng.gen_range(0..=10);
                 item_library[area].push(format!("{:02X}", i - 19));
-                if log {
+                if cfg.log {
                     println!("item box {:02X} is in area {}", i - 19, area);
                 }
             }
         }
 
-        if force_shields {
+        if cfg.item_config.force_shields {
             for x in 1..=5 {
                 let mut possibilities = vec![
                     x * 2 - 2,
@@ -98,11 +78,11 @@ impl ItemGenerator {
         }
 
         let mut patch_string = String::new();
-        if log {
+        if cfg.log {
             println!();
         }
         for (i, item) in item_pool.iter().enumerate().take(19 + 1) {
-            if log {
+            if cfg.log {
                 println!("corridor {} has {}", i + 1, item);
             }
             patch_string.push_str(item);
@@ -114,17 +94,17 @@ impl ItemGenerator {
         for (i, item) in item_pool
             .iter()
             .enumerate()
-            .take((pool_size - (single_shops + multi_shops + 1)) + 1)
+            .take((pool_size - (cfg.map_config.single_shops + cfg.map_config.multi_shops + 1)) + 1)
             .skip(20)
         {
             item_string.push_str(item);
 
             if (30..52).contains(&i) {
-                if log {
+                if cfg.log {
                     println!("miniboss {:02X} has {}", i - 19, item);
                 }
             } else {
-                if log {
+                if cfg.log {
                     println!("item box {:02X} has {}", i - 19, item);
                 }
                 if i - 19 > 57 {
@@ -139,12 +119,15 @@ impl ItemGenerator {
         for (i, item) in item_pool
             .iter()
             .enumerate()
-            .take((pool_size - (multi_shops + 1)) + 1)
-            .skip(pool_size - (single_shops + multi_shops + 1) + 1)
+            .take((pool_size - (cfg.map_config.multi_shops + 1)) + 1)
+            .skip(pool_size - (cfg.map_config.single_shops + cfg.map_config.multi_shops + 1) + 1)
         {
-            let id = i - (pool_size - (single_shops + multi_shops + 1)) + 57;
+            let id = i
+                - (pool_size - (cfg.map_config.single_shops + cfg.map_config.multi_shops + 1))
+                + 57;
             let price = Self::random_price_for_area(
-                i - (pool_size - (single_shops + multi_shops + 1) + 1),
+                i - (pool_size - (cfg.map_config.single_shops + cfg.map_config.multi_shops + 1)
+                    + 1),
                 rng,
             );
 
@@ -154,7 +137,7 @@ impl ItemGenerator {
             patch_string.push_str(&flipped_price);
             patch_string.push_str(item);
             single_shop_library[0].push(format!("{:02X}", id));
-            if log {
+            if cfg.log {
                 println!("small shop {:02X} has {}", id, item);
             }
         }
@@ -165,9 +148,9 @@ impl ItemGenerator {
             .iter()
             .enumerate()
             .take(pool_size)
-            .skip(pool_size - (multi_shops + 1) + 1)
+            .skip(pool_size - (cfg.map_config.multi_shops + 1) + 1)
         {
-            let id = i - (pool_size - (multi_shops + 1)) + 62;
+            let id = i - (pool_size - (cfg.map_config.multi_shops + 1)) + 62;
             let desired_area = rng.gen_range(1..=10);
             let price = Self::random_price_for_area(desired_area, rng);
 
@@ -182,14 +165,18 @@ impl ItemGenerator {
             patch_string.push_str(&format!("{:02X}", rng.gen_range(0..=10)));
             multi_shop_library[desired_area].push(format!("{:02X}", id));
 
-            if log {
+            if cfg.log {
                 println!("big shop {:02X} has {} in area {}", id, item, desired_area);
             }
         }
 
         patcher.add_change(&patch_string, "1605e");
 
-        (item_library, single_shop_library, multi_shop_library)
+        ItemLibrary {
+            item_library,
+            single_shop_library,
+            multi_shop_library,
+        }
     }
 
     fn random_price_for_area(area: usize, rng: &mut ChaCha8Rng) -> usize {
@@ -209,51 +196,41 @@ impl ItemGenerator {
         }
     }
 
-    fn create_item_pool(
-        weapon_size: usize,
-        blue: usize,
-        red: usize,
-        shield: usize,
-        force_shields: bool,
-        guns: usize,
-        rapid_fires: usize,
-        etanks: usize,
-        enemy_erasers: usize,
-        rng: &mut ChaCha8Rng,
-    ) -> Vec<String> {
+    fn create_item_pool(cfg: &Config, rng: &mut ChaCha8Rng) -> Vec<String> {
+        let item_cfg = &cfg.item_config;
         let mut pool = vec![];
-        for _ in 0..weapon_size {
+        for _ in 0..item_cfg.weapon_size {
             for i in 0..=10 {
                 pool.push(format!("{:02X}", i));
             }
         }
-        for _ in 0..blue {
+        for _ in 0..item_cfg.blue {
             pool.push(format!("{:02X}", Item::BlueLander as i32));
         }
-        for _ in 0..red {
+        for _ in 0..item_cfg.red {
             pool.push(format!("{:02X}", Item::RedLander as i32));
         }
 
-        let mut shield = shield;
-        if force_shields {
+        let mut shield = item_cfg.shield;
+        if item_cfg.force_shields {
             shield -= 5;
         }
         for _ in 0..shield {
             pool.push(format!("{:02X}", Item::Shield as i32));
         }
 
-        for _ in 0..guns {
+        for _ in 0..item_cfg.guns {
             pool.push(format!("{:02X}", Item::Gun as i32));
         }
-        for _ in 0..rapid_fires {
+        for _ in 0..item_cfg.rapid_fires {
             pool.push(format!("{:02X}", Item::RapidFire as i32));
         }
 
-        for _ in 0..etanks {
+        for _ in 0..item_cfg.etanks {
             pool.push(format!("{:02X}", Item::EnemyTank as i32));
         }
 
-        for _ in 0..enemy_erasers {
+        for _ in 0..item_cfg.enemy_erasers {
             pool.push(format!("{:02X}", Item::EnemyEraser as i32));
         }
 
@@ -265,7 +242,7 @@ impl ItemGenerator {
         }
         pool.shuffle(rng);
 
-        if force_shields {
+        if item_cfg.force_shields {
             for _ in 0..5 {
                 pool.push(format!("{:02X}", Item::Shield as i32));
             }

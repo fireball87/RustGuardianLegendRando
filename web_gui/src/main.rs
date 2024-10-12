@@ -71,6 +71,8 @@ fn app() -> Element {
                         &(uploaded.read()),
                         Config {
                             corridor_config: corridor_cfg(),
+                            map_config: MapConfig::default(),
+                            item_config: ItemConfig::default(),
                             qol_hacks: qol_cfg(),
                             color_options: ColorOptions {
                                 color_strategy: colors,

@@ -100,8 +100,70 @@ impl Default for BossConfig {
 }
 
 #[derive(PartialEq, Eq, Clone)]
+pub struct MapConfig {
+    pub min_area_size: usize,
+    pub max_area_size: usize,
+    pub desired_connections: i32,
+    pub desired_one_way_connections: i32,
+    pub portal_only_one_ways: bool,
+    pub decoration_odds: u8, // one out of ever decoration_odds rooms
+    pub chip_odds: u8,       // one out of every chip_odds rooms
+    pub empty_room_odds: u8, // one out of every empty_room_odds rooms
+    pub multi_shops: usize,
+    pub single_shops: usize,
+}
+
+impl Default for MapConfig {
+    fn default() -> Self {
+        MapConfig {
+            min_area_size: 18,
+            max_area_size: 25,
+            desired_connections: 3,
+            desired_one_way_connections: 0,
+            portal_only_one_ways: false,
+            decoration_odds: 6,
+            chip_odds: 3,
+            empty_room_odds: 10,
+            multi_shops: 5,
+            single_shops: 5,
+        }
+    }
+}
+
+#[derive(PartialEq, Eq, Clone)]
+pub struct ItemConfig {
+    pub weapon_size: usize,
+    pub blue: usize,
+    pub red: usize,
+    pub shield: usize,
+    pub force_shields: bool,
+    pub guns: usize,
+    pub rapid_fires: usize,
+    pub etanks: usize,
+    pub enemy_erasers: usize,
+}
+
+impl Default for ItemConfig {
+    fn default() -> Self {
+        ItemConfig {
+            weapon_size: 4,
+            blue: 9,
+            red: 10,
+            shield: 6,
+            force_shields: true,
+            guns: 5,
+            rapid_fires: 5,
+            etanks: 3,
+            enemy_erasers: 5,
+        }
+    }
+}
+
+#[derive(PartialEq, Eq, Clone)]
 pub struct Config {
     pub corridor_config: CorridorConfig,
+    pub map_config: MapConfig,
+    pub item_config: ItemConfig,
     pub qol_hacks: QOLHacks,
     // pub bad_ideas: BadIdeas,
     pub color_options: ColorOptions,
@@ -116,6 +178,8 @@ impl Default for Config {
 
         Config {
             corridor_config: CorridorConfig::default(),
+            map_config: MapConfig::default(),
+            item_config: ItemConfig::default(),
             qol_hacks: QOLHacks::default(),
             color_options: ColorOptions::default(),
             boss_config: BossConfig::default(),

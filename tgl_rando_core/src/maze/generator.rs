@@ -1,4 +1,6 @@
+use crate::config::Config;
 use crate::maze;
+use crate::maze::items::item_generator::ItemLibrary;
 use crate::maze::map::Map;
 use crate::maze::room::RoomType;
 use crate::maze::{area_division, items};
@@ -19,20 +21,11 @@ impl Generator {
 
     pub fn run(
         &self,
-        item_library: Vec<Vec<String>>,
-        small_shop_library: Vec<Vec<String>>,
-        multi_shop_library: Vec<Vec<String>>,
-        min_area_size: usize,
-        max_area_size: usize,
-        desired_connections: i32,
-        desired_one_way_connections: i32,
-        portal_only_one_ways: bool,
-        decoration_odds: u8,
-        chip_odds: u8,
-        empty_room_odds: u8,
-        log: bool,
+        item_library: &ItemLibrary,
+        cfg: &Config,
         rng: &mut ChaCha8Rng,
     ) -> Result<Map, String> {
+        let map_cfg = &cfg.map_config;
         //create the map
 
         let mut map = Map::new();
@@ -52,28 +45,28 @@ impl Generator {
         for i in 1..=10 {
             self.grow_zone(
                 i,
-                rng.gen_range(min_area_size..=max_area_size),
+                rng.gen_range(map_cfg.min_area_size..=map_cfg.max_area_size),
                 &mut map,
                 rng,
             );
-            self.add_connections(&mut map, i, desired_connections, false, false, rng);
+            self.add_connections(&mut map, i, map_cfg.desired_connections, false, false, rng);
             self.add_connections(
                 &mut map,
                 i,
-                desired_one_way_connections,
+                map_cfg.desired_one_way_connections,
                 true,
-                portal_only_one_ways,
+                map_cfg.portal_only_one_ways,
                 rng,
             );
         }
         self.grow_zone(0, 50, &mut map, rng);
-        self.add_connections(&mut map, 0, desired_connections, false, false, rng);
+        self.add_connections(&mut map, 0, map_cfg.desired_connections, false, false, rng);
         self.add_connections(
             &mut map,
             0,
-            desired_one_way_connections,
+            map_cfg.desired_one_way_connections,
             true,
-            portal_only_one_ways,
+            map_cfg.portal_only_one_ways,
             rng,
         );
 
@@ -84,23 +77,17 @@ impl Generator {
 
         // place all my items
         for i in 0..=10 {
-            self.place_important_rooms(
-                &mut map,
-                small_shop_library.clone(),
-                multi_shop_library.clone(),
-                i,
-                rng,
-            );
-            self.place_items_and_minibosses(&mut map, item_library.clone(), i, rng);
+            self.place_important_rooms(&mut map, item_library, i, rng);
+            self.place_items_and_minibosses(&mut map, item_library, i, rng);
             self.place_non_important_rooms(&mut map, i, rng);
         }
 
         self.place_corridor_decorations(&mut map, rng);
-        self.place_random_decorations(&mut map, decoration_odds, chip_odds, rng);
+        self.place_random_decorations(&mut map, map_cfg.decoration_odds, map_cfg.chip_odds, rng);
 
-        self.populate_enemies(&mut map, empty_room_odds, rng);
+        self.populate_enemies(&mut map, map_cfg.empty_room_odds, rng);
         let bytes = self.count_all_room_bytes(&map);
-        if log {
+        if cfg.log {
             println!("{}", bytes);
         }
         if bytes > 1916 {
@@ -454,13 +441,13 @@ impl Generator {
     fn place_items_and_minibosses(
         &self,
         map: &mut Map,
-        items_library: Vec<Vec<String>>,
+        item_library: &ItemLibrary,
         area: i32,
         rng: &mut ChaCha8Rng,
     ) {
         let mut locations = self.create_list_of_suitable_rooms(map, area, false, false);
 
-        let items_to_place = items_library[area as usize].clone();
+        let items_to_place = item_library.item_library[area as usize].clone();
 
         // minibosses are the same between secret and the normal items
 
@@ -514,8 +501,7 @@ impl Generator {
     fn place_important_rooms(
         &self,
         map: &mut Map,
-        single_shop_library: Vec<Vec<String>>,
-        multi_shop_library: Vec<Vec<String>>,
+        item_library: &ItemLibrary,
         area: i32,
         rng: &mut ChaCha8Rng,
     ) {
@@ -533,8 +519,8 @@ impl Generator {
 
         // place single shops
 
-        let singleshops = single_shop_library[area as usize].clone();
-        let multishops = multi_shop_library[area as usize].clone();
+        let singleshops = item_library.single_shop_library[area as usize].clone();
+        let multishops = item_library.multi_shop_library[area as usize].clone();
 
         for item in &singleshops {
             if !locations.is_empty() {

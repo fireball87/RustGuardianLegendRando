@@ -22,13 +22,10 @@ pub fn generate(patcher: &mut Patcher, cfg: &Config) {
     if cfg.boss_config.shuffle_bosses {
         maze::shuffle_minibosses::shuffle_minibosses(patcher, cfg, &mut rng);
     }
-    let items = maze::items::item_generator::ItemGenerator::prepare_items(
-        patcher, 5, 5, 4, 9, 10, 6, true, 5, 5, 3, 5, cfg.log, &mut rng,
-    );
+    let item_library =
+        maze::items::item_generator::ItemGenerator::prepare_items(patcher, cfg, &mut rng);
 
-    let map = maze::generator::Generator.run(
-        items.0, items.1, items.2, 18, 25, 3, 0, false, 6, 3, 10, cfg.log, &mut rng,
-    );
+    let map = maze::generator::Generator.run(&item_library, cfg, &mut rng);
     match map {
         Ok(map) => {
             if cfg.log {

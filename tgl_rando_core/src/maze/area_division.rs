@@ -103,7 +103,7 @@ pub fn get_sub_division(rng: &mut ChaCha8Rng) -> Vec<Vec<i32>> {
     let rotate_times = rng.gen_range(0..=3);
 
     for _n in 0..=rotate_times {
-        rotate_90_degrees(&mut template);
+        rotate_90_degrees(&template);
     }
 
     template
@@ -115,19 +115,20 @@ fn flip_horizontally_in_place(matrix: &mut Vec<Vec<i32>>) {
     }
 }
 
-fn rotate_90_degrees(matrix: &Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+#[allow(clippy::needless_range_loop)]
+fn rotate_90_degrees(matrix: &[Vec<i32>]) -> Vec<Vec<i32>> {
     let height = matrix.len();
     let width = matrix[0].len();
 
     // Create a new matrix with swapped dimensions
     let mut rotated_matrix = vec![vec![0; height]; width];
 
+    // I much prefer a range loop for this since i have 2 matrices and i am editing
     for i in 0..height {
         for j in 0..width {
             rotated_matrix[j][height - 1 - i] = matrix[i][j];
         }
     }
-
     rotated_matrix
 }
 

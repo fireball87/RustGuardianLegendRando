@@ -137,11 +137,10 @@ fn patch_single_area(
         should_flip = true;
     }
 
-    let colorshift;
-    match hue_options.rotate_hue {
-        true => colorshift = format!("{}", shift_distance),
-        false => colorshift = "false".to_string(),
-    }
+    let colorshift = match hue_options.rotate_hue {
+        true => format!("{}", shift_distance),
+        false => "false".to_string(),
+    };
 
     if cfg.log {
         println!(

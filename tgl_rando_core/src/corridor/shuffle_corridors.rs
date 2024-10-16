@@ -1,5 +1,6 @@
 use crate::corridor::shuffle_bosses::OutputBoss;
 use crate::patcher::Patcher;
+use crate::tgl_error::{tgl_error, TGLError};
 use rand::seq::SliceRandom;
 use rand_chacha::ChaCha8Rng;
 
@@ -9,7 +10,7 @@ pub fn shuffle_corridors(
     shuffled_bosses: &Option<(Vec<OutputBoss>, Vec<OutputBoss>, Option<OutputBoss>)>,
     log: bool,
     rng: &mut ChaCha8Rng,
-) {
+) -> Result<(), TGLError> {
     let mut table: Vec<[u32; 4]> = vec![
         [1, 0x40, 0x509C, 0x21],
         [2, 0x45, 0x7F9D, 0x21],
@@ -80,7 +81,10 @@ pub fn shuffle_corridors(
     //place the final boss into the string
     if let Some(id) = final_id {
         // try to shove the boss string into the c21 slot
-        bosses.push_str(&format!("{:02X}", c21_final_id.unwrap()));
+        bosses.push_str(&format!(
+            "{:02X}",
+            c21_final_id.ok_or(tgl_error("c21_final_id was null"))?
+        ));
         bosses.push_str(&format!("{:02X}", id));
     }
 
@@ -91,6 +95,8 @@ pub fn shuffle_corridors(
     patcher.add_change(&bosses, "d162");
     patcher.add_change(&pointers, "10029");
     patcher.add_change(&graphics, "1ef66");
+
+    Ok(())
 
     //change the boss tied to the corridor
     //boss table is d161 and starts at 0, we're not shifting 0 for the moment

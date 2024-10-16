@@ -1,7 +1,9 @@
 use crate::corridor::shuffle_bosses::OutputBoss;
 use crate::patcher::Patcher;
+use crate::tgl_error::{tgl_error, TGLError};
 use rand::seq::SliceRandom;
 use rand_chacha::ChaCha8Rng;
+use std::cmp::Ordering;
 
 #[derive(Clone)]
 pub struct TokenEntry {
@@ -41,7 +43,7 @@ pub fn shuffle_corridor_internals(
     shuffle_internals: bool,
     bosses: &Option<(Vec<OutputBoss>, Vec<OutputBoss>, Option<OutputBoss>)>,
     rng: &mut ChaCha8Rng,
-) {
+) -> Result<(), TGLError> {
     //c0
     let c0 = Corridor {id:0, address:"10055", data:"000000008700000161830000045983000007C5BC00000202B48100000604400503140161824108083100618242010542066182030880FE080D9E841400000010900106044482060604D38345CE061104A08346640097FCA184476400970CA1844C020164832A030607E0FCA083E10CA083E304A1844202000000DB844414260C04C78445163A0904C7844613260C04C7845C03000001BA0406024400180605D184458C180609D184D20506036026FCA08361260CA083C21500DB8404060605C05C04A18441001208FCA083420C12080CA083435A080706D184445A0E0508D184C2060607400001220005844100012204058442000122080584430001220C0584040C0D0404001984052809FC040C198406440D04040019844E070605C01704A184C108FCA083C2080CA08343160504049D83441605040B9D83580700800085070606E0002784610603978342040003059783430500030797834404000309978365060B97838607059107000000"};
 
@@ -123,21 +125,22 @@ pub fn shuffle_corridor_internals(
     ];
 
     for corridor in input_data {
-        let mut tokenized = tokenize_corridor(corridor.data, corridor.id, bosses);
+        let mut tokenized = tokenize_corridor(corridor.data, corridor.id, bosses)?;
         if shuffle_internals && corridor.id != 21 && corridor.id != 22 {
-            shuffle_individual_corridor_internals(&mut tokenized, rng);
+            shuffle_individual_corridor_internals(&mut tokenized, rng)?;
         }
         let output_hex = write_to_hex(tokenized);
 
         patcher.add_change(&output_hex, corridor.address);
     }
+    Ok(())
 }
 
 fn tokenize_corridor(
     input: &str,
     corridor_number: u32,
     bosses: &Option<(Vec<OutputBoss>, Vec<OutputBoss>, Option<OutputBoss>)>,
-) -> Vec<TokenEntry> {
+) -> Result<Vec<TokenEntry>, TGLError> {
     let mut bosses_placed = 0;
     let mut last_c7: Option<usize> = None;
     let mut return_array: Vec<TokenEntry> = Vec::new();
@@ -185,15 +188,14 @@ fn tokenize_corridor(
             }
             "06" => {
                 digits = -1;
-                let (en, text) = parse_command6(scratch);
+                let (en, text) = parse_command6(scratch)?;
                 enemies = Some(en);
                 scratch = text;
             }
             "08" => digits = 8,
             "09" | "03" => digits = 4,
             _default => {
-                let error = "Tried to tokenize an unknown command.";
-                panic!("{}", error);
+                return Err("Tried to tokenize an unknown command.".into());
             }
         }
 
@@ -275,8 +277,8 @@ fn tokenize_corridor(
 
                 if last_c6_entry.time_to_next.is_none() {
                     if command == "06" {
-                        let time_diff = i32::from_str_radix(&entry.time, 16).unwrap()
-                            - i32::from_str_radix(&last_c6_entry.time, 16).unwrap();
+                        let time_diff = i32::from_str_radix(&entry.time, 16)?
+                            - i32::from_str_radix(&last_c6_entry.time, 16)?;
                         last_c6_entry.time_to_next = Some(format!("{:04X}", time_diff));
                     }
                     if command == "05" || command == "01" {
@@ -302,8 +304,7 @@ fn tokenize_corridor(
         // Lock c0 cannons
         if corridor_number == 0
             && (entry.time == "074E"
-                || i32::from_str_radix(&entry.time, 16).unwrap()
-                    <= i32::from_str_radix("04BA", 16).unwrap())
+                || i32::from_str_radix(&entry.time, 16)? <= i32::from_str_radix("04BA", 16)?)
         {
             entry.locked = true;
         }
@@ -317,18 +318,18 @@ fn tokenize_corridor(
         len += 1;
     }
 
-    return_array
+    Ok(return_array)
 }
-fn parse_command6(input: String) -> (Vec<Enemies>, String) {
+fn parse_command6(input: String) -> Result<(Vec<Enemies>, String), TGLError> {
     let mut scratch = input.to_string();
-    let entries = u8::from_str_radix(&scratch[6..8], 16).unwrap();
+    let entries = u8::from_str_radix(&scratch[6..8], 16)?;
     scratch.replace_range(0..8, "");
 
     let mut enemy_array = Vec::new();
 
     for _x in 1..=entries {
         let command_txt = scratch[0..2].to_string();
-        let command = u8::from_str_radix(&command_txt, 16).unwrap();
+        let command = u8::from_str_radix(&command_txt, 16)?;
         scratch.replace_range(0..2, "");
 
         let mut initial_delay = None;
@@ -385,18 +386,21 @@ fn parse_command6(input: String) -> (Vec<Enemies>, String) {
         });
     }
 
-    (enemy_array, scratch)
+    Ok((enemy_array, scratch))
 }
 
-fn shuffle_individual_corridor_internals(input_array: &mut Vec<TokenEntry>, rng: &mut ChaCha8Rng) {
+fn shuffle_individual_corridor_internals(
+    input_array: &mut Vec<TokenEntry>,
+    rng: &mut ChaCha8Rng,
+) -> Result<(), TGLError> {
     let mut sections: Vec<CurrentSection> = Vec::new();
     let mut current_section: Option<CurrentSection> = None;
 
     for entry in &mut *input_array {
         if entry.command == "06" {
             if entry.locked {
-                if current_section.is_some() {
-                    sections.push(current_section.unwrap());
+                if let Some(sec) = current_section {
+                    sections.push(sec);
                     current_section = None;
                 }
             } else {
@@ -424,7 +428,7 @@ fn shuffle_individual_corridor_internals(input_array: &mut Vec<TokenEntry>, rng:
     let mut index = 0;
     for section in &sections {
         let mut time = 0;
-        let section_time = u16::from_str_radix(&section.time, 16).unwrap();
+        let section_time = u16::from_str_radix(&section.time, 16)?;
         for entry in &section.entries {
             let mut cloned_entry = entry.clone();
             while input_array[index].command != "06" || input_array[index].locked {
@@ -433,20 +437,34 @@ fn shuffle_individual_corridor_internals(input_array: &mut Vec<TokenEntry>, rng:
             let entry_time = format!("{:04X}", section_time + time);
             cloned_entry.time = entry_time;
             if let Some(time_to_next) = &entry.time_to_next {
-                time += u16::from_str_radix(time_to_next, 16).unwrap();
+                time += u16::from_str_radix(time_to_next, 16)?;
             }
             input_array[index] = cloned_entry;
             index += 1;
         }
     }
 
+    let mut did_err = false;
+
     input_array.sort_by(|a, b| {
-        let a_time = u16::from_str_radix(&a.time, 16).unwrap();
-        let b_time = u16::from_str_radix(&b.time, 16).unwrap();
-        a_time.cmp(&b_time)
+        if let (Ok(a_time), Ok(b_time)) = (
+            u16::from_str_radix(&a.time, 16),
+            u16::from_str_radix(&b.time, 16),
+        ) {
+            a_time.cmp(&b_time)
+        } else {
+            did_err = true;
+            Ordering::Equal
+        }
     });
 
-    //input_array
+    if did_err {
+        Err(tgl_error(
+            "one of the values in input arrays time didn't parse to be sorted",
+        ))
+    } else {
+        Ok(())
+    }
 }
 
 fn write_to_hex(input_array: Vec<TokenEntry>) -> String {

@@ -1,4 +1,5 @@
 use crate::patcher::Patcher;
+use crate::tgl_error::TGLError;
 use rand::seq::SliceRandom;
 use rand::Rng;
 use rand_chacha::ChaCha8Rng;
@@ -21,7 +22,7 @@ pub fn randomize_bosses(
     patcher: &mut Patcher,
     randomize_final_boss: bool,
     rng: &mut ChaCha8Rng,
-) -> (Vec<OutputBoss>, Vec<OutputBoss>, Option<OutputBoss>) {
+) -> Result<(Vec<OutputBoss>, Vec<OutputBoss>, Option<OutputBoss>), TGLError> {
     let mut table = vec![
         Boss {
             boss: "eyegore",
@@ -95,7 +96,7 @@ pub fn randomize_bosses(
             let flipped_pointer = format!("{}{}", &boss.pointer[x][2..], &boss.pointer[x][0..2]);
             let offset = format!(
                 "{:02X}",
-                bankstart + u32::from_str_radix(&flipped_pointer, 16).unwrap()
+                bankstart + u32::from_str_radix(&flipped_pointer, 16)?
             );
             patcher.add_change(boss.patch[x], offset.as_str());
         }
@@ -124,8 +125,8 @@ pub fn randomize_bosses(
         }
 
         final_boss = Some(OutputBoss {
-            id: u32::from_str_radix(id, 16).unwrap(),
-            pointer: u32::from_str_radix(pointer, 16).unwrap(),
+            id: u32::from_str_radix(id, 16)?,
+            pointer: u32::from_str_radix(pointer, 16)?,
         });
 
         if id != "4f" {
@@ -149,8 +150,8 @@ pub fn randomize_bosses(
         };
         let id = c21sourcelist[x].ids[key];
         c21bosses.push(OutputBoss {
-            id: u32::from_str_radix(id, 16).unwrap(),
-            pointer: u32::from_str_radix(pointer, 16).unwrap(),
+            id: u32::from_str_radix(id, 16)?,
+            pointer: u32::from_str_radix(pointer, 16)?,
         });
         c21sourcelist.remove(x);
     }
@@ -165,8 +166,8 @@ pub fn randomize_bosses(
                 boss.pointer[0]
             };
             level_bosses.push(OutputBoss {
-                id: u32::from_str_radix(id, 16).unwrap(),
-                pointer: u32::from_str_radix(pointer, 16).unwrap(),
+                id: u32::from_str_radix(id, 16)?,
+                pointer: u32::from_str_radix(pointer, 16)?,
             });
         }
     }
@@ -188,5 +189,5 @@ pub fn randomize_bosses(
     for (index, row) in level_bosses.iter().enumerate() {
         println!("corridor boss {} is {:02X}", index + 1, row.id);
     }
-    (level_bosses, c21bosses, final_boss)
+    Ok((level_bosses, c21bosses, final_boss))
 }

@@ -1,5 +1,6 @@
 use crate::config::Config;
 use crate::patcher::Patcher;
+use crate::tgl_error::TGLError;
 use rand::prelude::SliceRandom;
 use rand::Rng;
 use rand_chacha::ChaCha8Rng;
@@ -34,12 +35,16 @@ pub struct ItemLibrary {
 pub struct ItemGenerator;
 
 impl ItemGenerator {
-    pub fn prepare_items(patcher: &mut Patcher, cfg: &Config, rng: &mut ChaCha8Rng) -> ItemLibrary {
+    pub fn prepare_items(
+        patcher: &mut Patcher,
+        cfg: &Config,
+        rng: &mut ChaCha8Rng,
+    ) -> Result<ItemLibrary, TGLError> {
         let mut single_shop_library = vec![vec![]; 11];
         let mut multi_shop_library = vec![vec![]; 11];
         let mut item_library = vec![vec![]; 11];
 
-        let mut item_pool = Self::create_item_pool(cfg, rng);
+        let mut item_pool = Self::create_item_pool(cfg, rng)?;
 
         let pool_size = item_pool.len();
         for i in 20..=pool_size - (cfg.map_config.single_shops + cfg.map_config.multi_shops + 1) {
@@ -66,10 +71,10 @@ impl ItemGenerator {
                 ];
 
                 for item in &item_library[x * 2 - 1] {
-                    possibilities.push(usize::from_str_radix(item, 16).unwrap() + 19);
+                    possibilities.push(usize::from_str_radix(item, 16)? + 19);
                 }
                 for item in &item_library[x * 2] {
-                    possibilities.push(usize::from_str_radix(item, 16).unwrap() + 19);
+                    possibilities.push(usize::from_str_radix(item, 16)? + 19);
                 }
 
                 let index_to_swap = possibilities[rng.gen_range(0..possibilities.len())];
@@ -108,7 +113,7 @@ impl ItemGenerator {
                     println!("item box {:02X} has {}", i - 19, item);
                 }
                 if i - 19 > 57 {
-                    panic!("Tried to place more item boxes than the game had");
+                    return Err("Tried to place more item boxes than the game had".into());
                 }
             }
         }
@@ -172,11 +177,11 @@ impl ItemGenerator {
 
         patcher.add_change(&patch_string, "1605e");
 
-        ItemLibrary {
+        Ok(ItemLibrary {
             item_library,
             single_shop_library,
             multi_shop_library,
-        }
+        })
     }
 
     fn random_price_for_area(area: usize, rng: &mut ChaCha8Rng) -> usize {
@@ -196,7 +201,7 @@ impl ItemGenerator {
         }
     }
 
-    fn create_item_pool(cfg: &Config, rng: &mut ChaCha8Rng) -> Vec<String> {
+    fn create_item_pool(cfg: &Config, rng: &mut ChaCha8Rng) -> Result<Vec<String>, TGLError> {
         let item_cfg = &cfg.item_config;
         let mut pool = vec![];
         for _ in 0..item_cfg.weapon_size {
@@ -235,10 +240,10 @@ impl ItemGenerator {
         }
 
         if pool.len() < 50 {
-            panic!("Not enough items to fill shops.");
+            return Err("Not enough items to fill shops.".into());
         }
         if pool.len() > 57 + 30 + 10 {
-            panic!("Too many items to place.");
+            return Err("Too many items to place.".into());
         }
         pool.shuffle(rng);
 
@@ -247,6 +252,6 @@ impl ItemGenerator {
                 pool.push(format!("{:02X}", Item::Shield as i32));
             }
         }
-        pool
+        Ok(pool)
     }
 }

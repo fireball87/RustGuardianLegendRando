@@ -1,3 +1,4 @@
+use crate::tgl_error::TGLError;
 use rand::Rng;
 use rand_chacha::ChaCha8Rng;
 
@@ -5,21 +6,18 @@ pub fn get_item_blocks() -> Vec<&'static str> {
     vec!["AE94", "C994", "BE94", "B394"]
 }
 
-pub fn get_text_block(area: i32) -> Vec<&'static str> {
+pub fn get_text_block(area: i32) -> Result<Vec<&'static str>, TGLError> {
     match area {
-        0 => vec!["01", "02", "03", "10", "12"], //removed "00" because we'll place it manually
-        1 | 6 | 8 => vec![],
-        2 => vec!["0C"],
-        3 => vec!["0D"],
-        4 => vec!["0E"],
-        5 => vec!["0F"],
-        7 => vec!["11"],
-        9 => vec!["13"],
-        10 => vec!["14"],
-        _ => {
-            let error = "Requested Invalid Area";
-            panic!("{}", error);
-        }
+        0 => Ok(vec!["01", "02", "03", "10", "12"]), //removed "00" because we'll place it manually
+        1 | 6 | 8 => Ok(vec![]),
+        2 => Ok(vec!["0C"]),
+        3 => Ok(vec!["0D"]),
+        4 => Ok(vec!["0E"]),
+        5 => Ok(vec!["0F"]),
+        7 => Ok(vec!["11"]),
+        9 => Ok(vec!["13"]),
+        10 => Ok(vec!["14"]),
+        _ => Err("Requested Invalid Area".into()),
     }
 }
 
@@ -30,7 +28,7 @@ pub(crate) fn get_random_room_block(
     transition_type: i32,
     direction: i32,
     rng: &mut ChaCha8Rng,
-) -> String {
+) -> Result<String, TGLError> {
     match (has_chips, transition_type, direction) {
         (false, 0, _) => {
             //	6894 up arrow complete
@@ -53,80 +51,78 @@ pub(crate) fn get_random_room_block(
                 "6894", "3d94", "4694", "5094", "8794", "3f94", "8c94", "5d94", "5294", "e394",
                 "dd94", "df94", "d994", "d194", "d794", "d594",
             ];
-            values[rng.gen_range(0..values.len())].to_string()
+            Ok(values[rng.gen_range(0..values.len())].to_string())
         }
         (true, 0, _) => {
             //	6f94 up arrow with back smashed and 2 unrevealed chips
             //	4194 right arrow with 2 blue chips cut out
             //	9d94 arrow pointing down with a bunch of unrevealed chips in it
             let values = ["6f94", "4194", "9d94"];
-            values[rng.gen_range(0..values.len())].to_string()
+            Ok(values[rng.gen_range(0..values.len())].to_string())
         }
-        (false, 1, 1) => "1c95".to_string(), //	1c95 a0 area transition going up with a bunch of extra red blocks
+        (false, 1, 1) => Ok("1c95".to_string()), //	1c95 a0 area transition going up with a bunch of extra red blocks
         (false, 1, 2) => {
             //	3c95 A0 area transition going down with 5 red blocks above
             //	4995 an area transition going down with 4 cut off blocks
             let values = ["3c95", "4995"];
-            values[rng.gen_range(0..values.len())].to_string()
+            Ok(values[rng.gen_range(0..values.len())].to_string())
         }
         (false, 1, 3) => {
             //	e994 a0 area transition pattern going left
             //	f394 area transition going left with an upsidedown L cut out of it
             //	eb94 area transition going left with some blocks that are red
             let values = ["e994", "f394", "eb94"];
-            values[rng.gen_range(0..values.len())].to_string()
+            Ok(values[rng.gen_range(0..values.len())].to_string())
         }
-        (false, 1, 4) => "0895".to_string(), //	0895 a0 area transition going right with 2 extra red blocks
+        (false, 1, 4) => Ok("0895".to_string()), //	0895 a0 area transition going right with 2 extra red blocks
         (true, 1, 1) => {
             //	1795 area transition up with some chips to pull up
             //	2995 area transition up with 2 blue chips and some random holes
             //	2495 area transition up with a chip block in the center of the room
             let values = ["1795", "2995", "2495"];
-            values[rng.gen_range(0..values.len())].to_string()
+            Ok(values[rng.gen_range(0..values.len())].to_string())
         }
         (true, 1, 2) => {
             //	3795 area transition down with a chip block in the middle
             //	4495 area transition down with a blue chip in the middle
             let values = ["4495", "3795"];
-            values[rng.gen_range(0..values.len())].to_string()
+            Ok(values[rng.gen_range(0..values.len())].to_string())
         }
-        (true, 1, 3) => "fb94".to_string(), //	fb94 area transition left with 4 chip tiles
+        (true, 1, 3) => Ok("fb94".to_string()), //	fb94 area transition left with 4 chip tiles
         (true, 1, 4) => {
             //	0395 area transition right with some chips to pull up
             //	0d95 area transition to the right with 4 blue chips in the middle
             let values = ["0395", "0d95"];
-            values[rng.gen_range(0..values.len())].to_string()
+            Ok(values[rng.gen_range(0..values.len())].to_string())
         }
         (false, 2, 1) => {
             //	7a95 corridor topper with up exit 6 point
             //	8595 corridor topper up with 8 point
             let values = ["7a95", "8595"];
-            values[rng.gen_range(0..values.len())].to_string()
+            Ok(values[rng.gen_range(0..values.len())].to_string())
         }
         (false, 2, 2) => {
             //	9095 corridor topper with down exit 6 point
             //	9B95 corridor topper with down exit 8 point
             let values = ["9095", "9B95"];
-            values[rng.gen_range(0..values.len())].to_string()
+            Ok(values[rng.gen_range(0..values.len())].to_string())
         }
         (false, 2, 3) => {
             //	4e95 corridor topper with left exit 6 point
             //	5995 corridor topper left with 8 4oint
             let values = ["4e95", "5995"];
-            values[rng.gen_range(0..values.len())].to_string()
+            Ok(values[rng.gen_range(0..values.len())].to_string())
         }
         (false, 2, 4) => {
             //	6495 corridor topper with right exit 6 point
             //	6f95 corridor topper with right exit 8 point
             let values = ["6495", "6f95"];
-            values[rng.gen_range(0..values.len())].to_string()
+            Ok(values[rng.gen_range(0..values.len())].to_string())
         }
         (true, 2, _) => {
-            panic!("tried to place a chip decoration on a corridor, the game has none of those");
+            Err("tried to place a chip decoration on a corridor, the game has none of those".into())
         }
-        _ => {
-            panic!("somehow didn't hit an if block on the decoration placement");
-        }
+        _ => Err("somehow didn't hit an if block on the decoration placement".into()),
     }
 }
 
@@ -135,33 +131,30 @@ pub(crate) fn get_p_chip_room() -> String {
     "ea95".to_string()
 }
 
-pub(crate) fn get_cardinal_letter(letter: &str) -> String {
+pub(crate) fn get_cardinal_letter(letter: &str) -> Result<String, TGLError> {
     match letter.to_ascii_uppercase().as_str() {
-        "N" => "a695".to_string(),
-        "S" => "b495".to_string(),
-        "E" => "c895".to_string(),
-        "W" => "d995".to_string(),
-        _ => panic!("don't request bad cardinal letters..."),
+        "N" => Ok("a695".to_string()),
+        "S" => Ok("b495".to_string()),
+        "E" => Ok("c895".to_string()),
+        "W" => Ok("d995".to_string()),
+        _ => Err("don't request bad cardinal letters...".into()),
     }
 }
 
-pub fn get_miniboss(area: i32) -> Vec<&'static str> {
+pub fn get_miniboss(area: i32) -> Result<Vec<&'static str>, TGLError> {
     match area {
-        0 => vec!["0B", "0C"],
-        1 => vec!["0D", "0E"],
-        2 => vec!["0F", "10"],
-        3 => vec!["12", "11"],
-        4 => vec!["13", "14"],
-        5 => vec!["15", "16"],
-        6 => vec!["17", "18"],
-        7 => vec!["19", "1A"],
-        8 => vec!["1B", "1C"],
-        9 => vec!["1D", "1E"],
-        10 => vec!["1F", "20"],
-        _ => {
-            let error = "Requested Invalid Area";
-            panic!("{}", error);
-        }
+        0 => Ok(vec!["0B", "0C"]),
+        1 => Ok(vec!["0D", "0E"]),
+        2 => Ok(vec!["0F", "10"]),
+        3 => Ok(vec!["12", "11"]),
+        4 => Ok(vec!["13", "14"]),
+        5 => Ok(vec!["15", "16"]),
+        6 => Ok(vec!["17", "18"]),
+        7 => Ok(vec!["19", "1A"]),
+        8 => Ok(vec!["1B", "1C"]),
+        9 => Ok(vec!["1D", "1E"]),
+        10 => Ok(vec!["1F", "20"]),
+        _ => Err("Requested Invalid Area".into()),
     }
 }
 

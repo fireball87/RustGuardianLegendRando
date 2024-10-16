@@ -1,3 +1,4 @@
+use crate::tgl_error::TGLError;
 use rand::Rng;
 use rand_chacha::ChaCha8Rng;
 
@@ -5,9 +6,9 @@ fn get_library_size() -> i32 {
     1
 }
 
-fn get_library_entry(item: i32) -> Vec<Vec<i32>> {
+fn get_library_entry(item: i32) -> Result<Vec<Vec<i32>>, TGLError> {
     match item {
-        0 => vec![
+        0 => Ok(vec![
             vec![
                 1, 1, 1, 1, -1, 2, 2, 2, 2, 2, 2, 2, -1, 3, 3, 3, 3, 3, 3, -1, 4, 4, 4, 4,
             ],
@@ -84,16 +85,16 @@ fn get_library_entry(item: i32) -> Vec<Vec<i32>> {
             vec![
                 7, 7, 7, 7, -1, 8, 8, 8, 8, 8, 8, 8, -1, 9, 9, 9, 9, 9, 9, -1, 10, 10, 10, 10,
             ],
-        ],
+        ]),
         // Add other cases if needed
-        _ => panic!("Requested Invalid Map Template"),
+        _ => Err("Requested Invalid Map Template".into()),
     }
 }
 
-pub fn get_sub_division(rng: &mut ChaCha8Rng) -> Vec<Vec<i32>> {
+pub fn get_sub_division(rng: &mut ChaCha8Rng) -> Result<Vec<Vec<i32>>, TGLError> {
     // select from a template
 
-    let mut template = get_library_entry(rng.gen_range(0..get_library_size()));
+    let mut template = get_library_entry(rng.gen_range(0..get_library_size()))?;
 
     let should_flip = rng.gen_range(0..=1);
     if should_flip == 1 {
@@ -106,7 +107,7 @@ pub fn get_sub_division(rng: &mut ChaCha8Rng) -> Vec<Vec<i32>> {
         rotate_90_degrees(&template);
     }
 
-    template
+    Ok(template)
 }
 
 fn flip_horizontally_in_place(matrix: &mut Vec<Vec<i32>>) {

@@ -1,6 +1,10 @@
+mod gui_error;
+
+use crate::gui_error::GuiError;
 use dioxus::prelude::*;
 use tgl_rando_core::config::*;
 use tgl_rando_core::patcher::Patcher;
+use tgl_rando_core::tgl_error::TGLError;
 use tgl_rando_core::{generate, seed};
 
 fn main() {
@@ -24,6 +28,7 @@ fn app() -> Element {
     let qol_cfg = use_signal(QOLHacks::default);
     let color_cfg = use_signal(ColorOptions::default);
     let hue_cfg = use_signal(HueOptions::default);
+    let mut err_string = use_signal(String::new);
 
     rsx! {
         div {
@@ -32,6 +37,10 @@ fn app() -> Element {
             qol_hacks { c: qol_cfg }
             color_config { c: color_cfg, h: hue_cfg }
             h3 { "Generate" }
+
+            if !err_string().is_empty() {
+                h4 { color: "Red", "Error: {err_string}" }
+            }
             input {
                 // tell the input to pick a file
                 r#type: "file",
@@ -66,7 +75,7 @@ fn app() -> Element {
                         ColorStrategy::Random => ColorStrategy::Random,
                         ColorStrategy::ColorTheory(_) => ColorStrategy::ColorTheory(hue_cfg()),
                     };
-                    patch_file(
+                    match patch_file(
                         "tgl_rando.nes",
                         &(uploaded.read()),
                         Config {
@@ -82,7 +91,15 @@ fn app() -> Element {
                             log: false,
                             seed: seed::make_seed(),
                         },
-                    )
+                        err_string,
+                    ) {
+                        Ok(_) => {
+                            err_string.set("".to_string());
+                        }
+                        Err(e) => {
+                            err_string.set(e.message);
+                        }
+                    }
                 },
                 "Generate"
             }
@@ -106,7 +123,7 @@ fn corridor_config(c: Signal<CorridorConfig>) -> Element {
                 id: "shuffleCorridors",
                 oninput: move |event| {
                     c.set(CorridorConfig {
-                        shuffle_corridors: event.value().parse().unwrap(),
+                        shuffle_corridors: event.value().parse().unwrap_or(false),
                         ..c()
                     })
                 }
@@ -120,7 +137,7 @@ fn corridor_config(c: Signal<CorridorConfig>) -> Element {
                 id: "shuffle_ground",
                 oninput: move |event| {
                     c.set(CorridorConfig {
-                        shuffle_ground: event.value().parse().unwrap(),
+                        shuffle_ground: event.value().parse().unwrap_or(false),
                         ..c()
                     })
                 }
@@ -134,7 +151,7 @@ fn corridor_config(c: Signal<CorridorConfig>) -> Element {
                 id: "shuffle_skies",
                 oninput: move |event| {
                     c.set(CorridorConfig {
-                        shuffle_skies: event.value().parse().unwrap(),
+                        shuffle_skies: event.value().parse().unwrap_or(false),
                         ..c()
                     })
                 }
@@ -161,7 +178,7 @@ fn boss_config(c: Signal<BossConfig>) -> Element {
                 id: "shuffle_bosses",
                 oninput: move |event| {
                     c.set(BossConfig {
-                        shuffle_bosses: event.value().parse().unwrap(),
+                        shuffle_bosses: event.value().parse().unwrap_or(false),
                         ..c()
                     })
                 }
@@ -175,7 +192,7 @@ fn boss_config(c: Signal<BossConfig>) -> Element {
                 id: "shuffle_final_boss",
                 oninput: move |event| {
                     c.set(BossConfig {
-                        shuffle_final_boss: event.value().parse().unwrap(),
+                        shuffle_final_boss: event.value().parse().unwrap_or(false),
                         ..c()
                     })
                 }
@@ -189,7 +206,7 @@ fn boss_config(c: Signal<BossConfig>) -> Element {
                 id: "rebalance_bosses",
                 oninput: move |event| {
                     c.set(BossConfig {
-                        rebalance_bosses: event.value().parse().unwrap(),
+                        rebalance_bosses: event.value().parse().unwrap_or(false),
                         ..c()
                     })
                 }
@@ -205,7 +222,7 @@ fn boss_config(c: Signal<BossConfig>) -> Element {
                 id: "randomize_boss_health",
                 oninput: move |event| {
                     c.set(BossConfig {
-                        randomize_boss_health: event.value().parse().unwrap(),
+                        randomize_boss_health: event.value().parse().unwrap_or(false),
                         ..c()
                     })
                 }
@@ -234,7 +251,7 @@ fn qol_hacks(c: Signal<QOLHacks>) -> Element {
                 id: "faster_starting_fire",
                 oninput: move |event| {
                     c.set(QOLHacks {
-                        faster_starting_fire: event.value().parse().unwrap(),
+                        faster_starting_fire: event.value().parse().unwrap_or(false),
                         ..c()
                     })
                 }
@@ -248,7 +265,7 @@ fn qol_hacks(c: Signal<QOLHacks>) -> Element {
                 id: "fix_hyper_laser",
                 oninput: move |event| {
                     c.set(QOLHacks {
-                        fix_hyper_laser: event.value().parse().unwrap(),
+                        fix_hyper_laser: event.value().parse().unwrap_or(false),
                         ..c()
                     })
                 }
@@ -262,7 +279,7 @@ fn qol_hacks(c: Signal<QOLHacks>) -> Element {
                 id: "enemy_erasers_unlocked_from_start",
                 oninput: move |event| {
                     c.set(QOLHacks {
-                        enemy_erasers_unlocked_from_start: event.value().parse().unwrap(),
+                        enemy_erasers_unlocked_from_start: event.value().parse().unwrap_or(false),
                         ..c()
                     })
                 }
@@ -276,7 +293,7 @@ fn qol_hacks(c: Signal<QOLHacks>) -> Element {
                 id: "remove_flash",
                 oninput: move |event| {
                     c.set(QOLHacks {
-                        remove_flash: event.value().parse().unwrap(),
+                        remove_flash: event.value().parse().unwrap_or(false),
                         ..c()
                     })
                 }
@@ -342,7 +359,7 @@ fn color_config(c: Signal<ColorOptions>, h: Signal<HueOptions>) -> Element {
             id: "include_foreground",
             oninput: move |event| {
                 c.set(ColorOptions {
-                    include_foreground: event.value().parse().unwrap(),
+                    include_foreground: event.value().parse().unwrap_or(false),
                     ..c()
                 })
             }
@@ -361,7 +378,7 @@ fn hue_config(c: Signal<ColorOptions>, h: Signal<HueOptions>) -> Element {
             disabled: c().color_strategy == ColorStrategy::Random,
             oninput: move |event| {
                 h.set(HueOptions {
-                    rotate_hue: event.value().parse().unwrap(),
+                    rotate_hue: event.value().parse().unwrap_or(false),
                     ..h()
                 })
             }
@@ -403,14 +420,24 @@ fn hue_config(c: Signal<ColorOptions>, h: Signal<HueOptions>) -> Element {
     }
 }
 
-pub fn patch_file(name: &str, content: &[u8], cfg: Config) {
-    let patcher = setup(&cfg);
-    let rom = patcher.patch_u8_vec(content);
-    trigger_download(name, rom);
+pub fn patch_file(
+    name: &str,
+    content: &[u8],
+    cfg: Config,
+    error_string: Signal<String>,
+) -> Result<(), GuiError> {
+    let patcher = setup(&cfg)?;
+    let rom = patcher.patch_u8_vec(content)?;
+    trigger_download(name, rom, error_string)?;
+    Ok(())
 }
 
 //borrowed from dioxus discord user knickish
-pub fn trigger_download(name: &str, content: Vec<u8>) {
+pub fn trigger_download(
+    name: &str,
+    content: Vec<u8>,
+    mut error_string: Signal<String>,
+) -> Result<(), GuiError> {
     let eval = eval(
         r#"
         let filename = await dioxus.recv();
@@ -426,21 +453,24 @@ pub fn trigger_download(name: &str, content: Vec<u8>) {
         "#,
     );
 
-    eval.send(name.into()).unwrap();
-    eval.send(content.to_owned().into()).unwrap();
+    eval.send(name.into())?;
+    eval.send(content.to_owned().into())?;
 
     use_future(move || {
         to_owned![eval];
         async move {
-            eval.join().await.unwrap();
+            if eval.join().await.is_err() {
+                error_string.set("Error evaluating JS within trigger download".to_string());
+            }
         }
     });
+    Ok(())
 }
 
-fn setup(cfg: &Config) -> Patcher {
+fn setup(cfg: &Config) -> Result<Patcher, TGLError> {
     let mut patcher = Patcher::new();
 
-    generate(&mut patcher, cfg);
+    generate(&mut patcher, cfg)?;
 
-    patcher
+    Ok(patcher)
 }

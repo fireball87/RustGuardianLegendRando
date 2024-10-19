@@ -1,7 +1,10 @@
+use crate::config::Config;
 use crate::maze;
+use crate::maze::items::item_generator::ItemLibrary;
 use crate::maze::map::Map;
 use crate::maze::room::RoomType;
 use crate::maze::{area_division, items};
+use crate::tgl_error::{tgl_error, TGLError};
 use rand::prelude::SliceRandom;
 use rand::Rng;
 use rand_chacha::ChaCha8Rng;
@@ -19,92 +22,77 @@ impl Generator {
 
     pub fn run(
         &self,
-        item_library: Vec<Vec<String>>,
-        small_shop_library: Vec<Vec<String>>,
-        multi_shop_library: Vec<Vec<String>>,
-        min_area_size: usize,
-        max_area_size: usize,
-        desired_connections: i32,
-        desired_one_way_connections: i32,
-        portal_only_one_ways: bool,
-        decoration_odds: u8,
-        chip_odds: u8,
-        empty_room_odds: u8,
-        log: bool,
+        item_library: &ItemLibrary,
+        cfg: &Config,
         rng: &mut ChaCha8Rng,
-    ) -> Result<Map, String> {
+    ) -> Result<Map, TGLError> {
+        let map_cfg = &cfg.map_config;
         //create the map
 
         let mut map = Map::new();
 
         //subdivide the map into areas off a0 (trying to keep a tgl like grid map)
-        self.subdivide_map(rng, &mut map);
+        self.subdivide_map(rng, &mut map)?;
 
         //we don't have this really, we need to subdivide then fill the map
 
-        self.shuffle_areas(rng, &mut map);
+        self.shuffle_areas(rng, &mut map)?;
 
-        self.grow_a0_ring(&mut map); // i need to place cardinal directions before mapping the starting points, because the starting points will grow out a0 and break the calculation
-        self.place_cardinal_directions(&mut map, rng);
+        self.grow_a0_ring(&mut map)?; // i need to place cardinal directions before mapping the starting points, because the starting points will grow out a0 and break the calculation
+        self.place_cardinal_directions(&mut map, rng)?;
 
-        self.find_starting_points(&mut map, rng);
+        self.find_starting_points(&mut map, rng)?;
 
         for i in 1..=10 {
             self.grow_zone(
                 i,
-                rng.gen_range(min_area_size..=max_area_size),
+                rng.gen_range(map_cfg.min_area_size..=map_cfg.max_area_size),
                 &mut map,
                 rng,
-            );
-            self.add_connections(&mut map, i, desired_connections, false, false, rng);
+            )?;
+            self.add_connections(&mut map, i, map_cfg.desired_connections, false, false, rng)?;
             self.add_connections(
                 &mut map,
                 i,
-                desired_one_way_connections,
+                map_cfg.desired_one_way_connections,
                 true,
-                portal_only_one_ways,
+                map_cfg.portal_only_one_ways,
                 rng,
-            );
+            )?;
         }
-        self.grow_zone(0, 50, &mut map, rng);
-        self.add_connections(&mut map, 0, desired_connections, false, false, rng);
+        self.grow_zone(0, 50, &mut map, rng)?;
+        self.add_connections(&mut map, 0, map_cfg.desired_connections, false, false, rng)?;
         self.add_connections(
             &mut map,
             0,
-            desired_one_way_connections,
+            map_cfg.desired_one_way_connections,
             true,
-            portal_only_one_ways,
+            map_cfg.portal_only_one_ways,
             rng,
-        );
+        )?;
 
-        self.placestarting_point_rooms(&mut map);
-        self.place_area_decorations(&mut map, rng);
+        self.placestarting_point_rooms(&mut map)?;
+        self.place_area_decorations(&mut map, rng)?;
 
         self.place_starting_text_room(&mut map);
 
         // place all my items
         for i in 0..=10 {
-            self.place_important_rooms(
-                &mut map,
-                small_shop_library.clone(),
-                multi_shop_library.clone(),
-                i,
-                rng,
-            );
-            self.place_items_and_minibosses(&mut map, item_library.clone(), i, rng);
-            self.place_non_important_rooms(&mut map, i, rng);
+            self.place_important_rooms(&mut map, item_library, i, rng)?;
+            self.place_items_and_minibosses(&mut map, item_library, i, rng)?;
+            self.place_non_important_rooms(&mut map, i, rng)?;
         }
 
-        self.place_corridor_decorations(&mut map, rng);
-        self.place_random_decorations(&mut map, decoration_odds, chip_odds, rng);
+        self.place_corridor_decorations(&mut map, rng)?;
+        self.place_random_decorations(&mut map, map_cfg.decoration_odds, map_cfg.chip_odds, rng)?;
 
-        self.populate_enemies(&mut map, empty_room_odds, rng);
+        self.populate_enemies(&mut map, map_cfg.empty_room_odds, rng);
         let bytes = self.count_all_room_bytes(&map);
-        if log {
+        if cfg.log {
             println!("{}", bytes);
         }
         if bytes > 1916 {
-            panic!("Produced map that is too large")
+            Err("Produced map that is too large".into())
         } else {
             Ok(map)
         }
@@ -120,35 +108,40 @@ impl Generator {
         total
     }
 
-    fn subdivide_map(&self, rng: &mut ChaCha8Rng, map: &mut Map) {
-        let division = area_division::get_sub_division(rng);
+    fn subdivide_map(&self, rng: &mut ChaCha8Rng, map: &mut Map) -> Result<(), TGLError> {
+        let division = area_division::get_sub_division(rng)?;
         for i in 0..division.len() {
             for j in 0..division[0].len() {
                 let data = &mut map.data[[i, j]];
                 data.area = Some(division[i][j]);
             }
         }
+        Ok(())
     }
 
-    fn shuffle_areas(&self, rng: &mut ChaCha8Rng, map: &mut Map) {
+    fn shuffle_areas(&self, rng: &mut ChaCha8Rng, map: &mut Map) -> Result<(), TGLError> {
         let mut newareas = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
         newareas.shuffle(rng);
 
         for item in &mut map.data {
+            let area = item.area.ok_or(tgl_error("empty area"))?;
+
             //for item in row {
-            if (item.area.unwrap() >= 1) && (item.area.unwrap() <= 10) {
-                item.area = Some(newareas[item.area.unwrap() as usize - 1]);
+            if (1..=10).contains(&area) {
+                item.area = Some(newareas[area as usize - 1]);
             }
             //}
         }
+        Ok(())
     }
 
-    fn find_starting_points(&self, map: &mut Map, rng: &mut ChaCha8Rng) {
+    fn find_starting_points(&self, map: &mut Map, rng: &mut ChaCha8Rng) -> Result<(), TGLError> {
         let mut possible_points: Vec<Vec<(usize, usize, &str)>> = vec![vec![]; 10];
 
+        let err = "None value found in unwrapping of value in find_starting_points";
         for y_pos in 0..24 {
             for x_pos in 0..24 {
-                if map.data[[y_pos, x_pos]].area.unwrap() == -1 {
+                if map.data[[y_pos, x_pos]].area.ok_or(tgl_error(err))? == -1 {
                     let above_block = if y_pos > 0 {
                         Some(&map.data[[y_pos - 1, x_pos]])
                     } else {
@@ -171,10 +164,12 @@ impl Generator {
                     };
 
                     if let Some(above) = above_block {
-                        if above.area.unwrap() == 0 {
+                        if above.area.ok_or(tgl_error(err))? == 0 {
                             if let Some(below) = below_block {
-                                if below.area.unwrap() > 0 && below.area.unwrap() <= 10 {
-                                    possible_points[below.area.unwrap() as usize - 1]
+                                if below.area.ok_or(tgl_error(err))? > 0
+                                    && below.area.ok_or(tgl_error(err))? <= 10
+                                {
+                                    possible_points[below.area.ok_or(tgl_error(err))? as usize - 1]
                                         .push((y_pos, x_pos, "up"));
                                     continue;
                                 }
@@ -184,10 +179,12 @@ impl Generator {
                     }
 
                     if let Some(below) = below_block {
-                        if below.area.unwrap() == 0 {
+                        if below.area.ok_or(tgl_error(err))? == 0 {
                             if let Some(above) = above_block {
-                                if above.area.unwrap() > 0 && above.area.unwrap() <= 10 {
-                                    possible_points[above.area.unwrap() as usize - 1]
+                                if above.area.ok_or(tgl_error(err))? > 0
+                                    && above.area.ok_or(tgl_error(err))? <= 10
+                                {
+                                    possible_points[above.area.ok_or(tgl_error(err))? as usize - 1]
                                         .push((y_pos, x_pos, "down"));
                                     continue;
                                 }
@@ -197,10 +194,12 @@ impl Generator {
                     }
 
                     if let Some(left) = left_block {
-                        if left.area.unwrap() == 0 {
+                        if left.area.ok_or(tgl_error(err))? == 0 {
                             if let Some(right) = right_block {
-                                if right.area.unwrap() > 0 && right.area.unwrap() <= 10 {
-                                    possible_points[right.area.unwrap() as usize - 1]
+                                if right.area.ok_or(tgl_error(err))? > 0
+                                    && right.area.ok_or(tgl_error(err))? <= 10
+                                {
+                                    possible_points[right.area.ok_or(tgl_error(err))? as usize - 1]
                                         .push((y_pos, x_pos, "left"));
                                     continue;
                                 }
@@ -210,10 +209,12 @@ impl Generator {
                     }
 
                     if let Some(right) = right_block {
-                        if right.area.unwrap() == 0 {
+                        if right.area.ok_or(tgl_error(err))? == 0 {
                             if let Some(left) = left_block {
-                                if left.area.unwrap() > 0 && left.area.unwrap() <= 10 {
-                                    possible_points[left.area.unwrap() as usize - 1]
+                                if left.area.ok_or(tgl_error(err))? > 0
+                                    && left.area.ok_or(tgl_error(err))? <= 10
+                                {
+                                    possible_points[left.area.ok_or(tgl_error(err))? as usize - 1]
                                         .push((y_pos, x_pos, "right"));
                                     continue;
                                 }
@@ -227,10 +228,11 @@ impl Generator {
 
         for (area, position_array) in possible_points.iter().enumerate() {
             if position_array.is_empty() {
-                panic!(
+                return Err(format!(
                     "Area {} did not generate with any possible entry points.",
                     area + 1
-                );
+                )
+                .into());
             }
 
             let index = rng.gen_range(0..position_array.len());
@@ -290,14 +292,23 @@ impl Generator {
                 _ => {}
             }
         }
+        Ok(())
     }
 
-    fn grow_zone(&self, zone: i32, mut desired_size: usize, map: &mut Map, rng: &mut ChaCha8Rng) {
+    fn grow_zone(
+        &self,
+        zone: i32,
+        mut desired_size: usize,
+        map: &mut Map,
+        rng: &mut ChaCha8Rng,
+    ) -> Result<(), TGLError> {
+        let err = "area was None when a value was expected";
+
         let mut possible_grow_points = Vec::new();
 
         for y_pos in 0..24 {
             for x_pos in 0..24 {
-                if map.data[[y_pos, x_pos]].area.unwrap() == zone
+                if map.data[[y_pos, x_pos]].area.ok_or(tgl_error(err))? == zone
                     && map.data[[y_pos, x_pos]].accessible
                 {
                     possible_grow_points.push((y_pos, x_pos));
@@ -328,7 +339,7 @@ impl Generator {
                 match rem {
                     d if d == up
                         && y_pos > 0
-                        && map.data[[y_pos - 1, x_pos]].area.unwrap() == zone
+                        && map.data[[y_pos - 1, x_pos]].area.ok_or(tgl_error(err))? == zone
                         && !map.data[[y_pos - 1, x_pos]].accessible =>
                     {
                         map.data[[y_pos, x_pos]].exit_up = true;
@@ -339,7 +350,7 @@ impl Generator {
                     }
                     d if d == left
                         && x_pos > 0
-                        && map.data[[y_pos, x_pos - 1]].area.unwrap() == zone
+                        && map.data[[y_pos, x_pos - 1]].area.ok_or(tgl_error(err))? == zone
                         && !map.data[[y_pos, x_pos - 1]].accessible =>
                     {
                         map.data[[y_pos, x_pos]].exit_left = true;
@@ -350,7 +361,7 @@ impl Generator {
                     }
                     d if d == right
                         && x_pos < 23
-                        && map.data[[y_pos, x_pos + 1]].area.unwrap() == zone
+                        && map.data[[y_pos, x_pos + 1]].area.ok_or(tgl_error(err))? == zone
                         && !map.data[[y_pos, x_pos + 1]].accessible =>
                     {
                         map.data[[y_pos, x_pos]].exit_right = true;
@@ -361,7 +372,7 @@ impl Generator {
                     }
                     d if d == down
                         && y_pos < 23
-                        && map.data[[y_pos + 1, x_pos]].area.unwrap() == zone
+                        && map.data[[y_pos + 1, x_pos]].area.ok_or(tgl_error(err))? == zone
                         && !map.data[[y_pos + 1, x_pos]].accessible =>
                     {
                         map.data[[y_pos, x_pos]].exit_down = true;
@@ -383,12 +394,15 @@ impl Generator {
                 desired_size -= 1;
             }
         }
+        Ok(())
     }
-    fn grow_a0_ring(&self, map: &mut Map) {
+    fn grow_a0_ring(&self, map: &mut Map) -> Result<(), TGLError> {
+        let err = "area was None when a value was expected";
+
         // form the outside ring
         for y_pos in 0..24 {
             for x_pos in 0..24 {
-                if (map.data[[y_pos,x_pos]].area.unwrap() == 0)
+                if (map.data[[y_pos,x_pos]].area.ok_or(tgl_error(err))? == 0)
                     //&& (map.data[[y_pos,x_pos]].avoid_special)
                     && (map.data[[y_pos,x_pos]].room_type == RoomType::Normal)
                 //&& (map.data[[y_pos,x_pos]].accessible)
@@ -396,14 +410,16 @@ impl Generator {
                     let mut grow_vertically = false;
                     let mut grow_horizontally = false;
 
-                    if y_pos > 0 && map.data[[y_pos - 1, x_pos]].area.unwrap() <= -1
-                        || y_pos < 23 && map.data[[y_pos + 1, x_pos]].area.unwrap() <= -1
+                    if y_pos > 0 && map.data[[y_pos - 1, x_pos]].area.ok_or(tgl_error(err))? <= -1
+                        || y_pos < 23
+                            && map.data[[y_pos + 1, x_pos]].area.ok_or(tgl_error(err))? <= -1
                     {
                         grow_horizontally = true;
                     }
 
-                    if x_pos > 0 && map.data[[y_pos, x_pos - 1]].area.unwrap() <= -1
-                        || x_pos < 23 && map.data[[y_pos, x_pos + 1]].area.unwrap() <= -1
+                    if x_pos > 0 && map.data[[y_pos, x_pos - 1]].area.ok_or(tgl_error(err))? <= -1
+                        || x_pos < 23
+                            && map.data[[y_pos, x_pos + 1]].area.ok_or(tgl_error(err))? <= -1
                     {
                         grow_vertically = true;
                     }
@@ -412,14 +428,14 @@ impl Generator {
                         map.data[[y_pos, x_pos]].accessible = true;
                         map.data[[y_pos, x_pos]].avoid_special = true;
                         // grow up if can
-                        if map.data[[y_pos - 1, x_pos]].area.unwrap() == 0 {
+                        if map.data[[y_pos - 1, x_pos]].area.ok_or(tgl_error(err))? == 0 {
                             map.data[[y_pos, x_pos]].exit_up = true;
                             map.data[[y_pos - 1, x_pos]].accessible = true;
                             map.data[[y_pos - 1, x_pos]].avoid_special = true;
                             map.data[[y_pos - 1, x_pos]].exit_down = true;
                         }
                         // grow down If can
-                        if map.data[[y_pos + 1, x_pos]].area.unwrap() == 0 {
+                        if map.data[[y_pos + 1, x_pos]].area.ok_or(tgl_error(err))? == 0 {
                             map.data[[y_pos, x_pos]].exit_down = true;
                             map.data[[y_pos + 1, x_pos]].accessible = true;
                             map.data[[y_pos + 1, x_pos]].avoid_special = true;
@@ -432,14 +448,14 @@ impl Generator {
                         map.data[[y_pos, x_pos]].avoid_special = true;
 
                         // grow left if can
-                        if map.data[[y_pos, x_pos - 1]].area.unwrap() == 0 {
+                        if map.data[[y_pos, x_pos - 1]].area.ok_or(tgl_error(err))? == 0 {
                             map.data[[y_pos, x_pos]].exit_left = true;
                             map.data[[y_pos, x_pos - 1]].accessible = true;
                             map.data[[y_pos, x_pos - 1]].exit_right = true;
                             map.data[[y_pos, x_pos - 1]].avoid_special = true;
                         }
                         // grow right If can
-                        if map.data[[y_pos, x_pos + 1]].area.unwrap() == 0 {
+                        if map.data[[y_pos, x_pos + 1]].area.ok_or(tgl_error(err))? == 0 {
                             map.data[[y_pos, x_pos]].exit_right = true;
                             map.data[[y_pos, x_pos + 1]].accessible = true;
                             map.data[[y_pos, x_pos + 1]].exit_left = true;
@@ -449,18 +465,19 @@ impl Generator {
                 }
             }
         }
+        Ok(())
     }
 
     fn place_items_and_minibosses(
         &self,
         map: &mut Map,
-        items_library: Vec<Vec<String>>,
+        item_library: &ItemLibrary,
         area: i32,
         rng: &mut ChaCha8Rng,
-    ) {
-        let mut locations = self.create_list_of_suitable_rooms(map, area, false, false);
+    ) -> Result<(), TGLError> {
+        let mut locations = self.create_list_of_suitable_rooms(map, area, false, false)?;
 
-        let items_to_place = items_library[area as usize].clone();
+        let items_to_place = item_library.item_library[area as usize].clone();
 
         // minibosses are the same between secret and the normal items
 
@@ -479,16 +496,16 @@ impl Generator {
                 map.data[[*y_pos, *x_pos]].block_set = Some(
                     item_blocksets
                         .get(rng.gen_range(0..item_blocksets.len()))
-                        .unwrap()
+                        .ok_or(tgl_error("range failed in place items"))?
                         .to_string(),
                 );
                 locations.remove(index);
             } else {
-                panic!("map has no valid spot to place an item");
+                return Err("map has no valid spot to place an item".into());
             }
         }
 
-        for item in &minibosses_to_place {
+        for item in &minibosses_to_place? {
             if !locations.is_empty() {
                 let index = rng.gen_range(0..locations.len());
 
@@ -499,9 +516,10 @@ impl Generator {
 
                 locations.remove(index);
             } else {
-                panic!("map has no valid spot to place a miniboss");
+                return Err("map has no valid spot to place a miniboss".into());
             }
         }
+        Ok(())
     }
 
     fn place_starting_text_room(&self, map: &mut Map) {
@@ -514,27 +532,26 @@ impl Generator {
     fn place_important_rooms(
         &self,
         map: &mut Map,
-        single_shop_library: Vec<Vec<String>>,
-        multi_shop_library: Vec<Vec<String>>,
+        item_library: &ItemLibrary,
         area: i32,
         rng: &mut ChaCha8Rng,
-    ) {
-        let mut locations = self.create_list_of_suitable_rooms(map, area, true, false);
+    ) -> Result<(), TGLError> {
+        let mut locations = self.create_list_of_suitable_rooms(map, area, true, false)?;
 
         // place corridors
         if area == 0 {
-            self.place_corridor(21, &mut locations, map, rng);
+            self.place_corridor(21, &mut locations, map, rng)?;
         } else if area == 1 {
-            self.place_corridor(11, &mut locations, map, rng);
+            self.place_corridor(11, &mut locations, map, rng)?;
         } else {
-            self.place_corridor(area, &mut locations, map, rng);
-            self.place_corridor(area + 10, &mut locations, map, rng);
+            self.place_corridor(area, &mut locations, map, rng)?;
+            self.place_corridor(area + 10, &mut locations, map, rng)?;
         }
 
         // place single shops
 
-        let singleshops = single_shop_library[area as usize].clone();
-        let multishops = multi_shop_library[area as usize].clone();
+        let singleshops = item_library.single_shop_library[area as usize].clone();
+        let multishops = item_library.multi_shop_library[area as usize].clone();
 
         for item in &singleshops {
             if !locations.is_empty() {
@@ -547,7 +564,7 @@ impl Generator {
 
                 locations.remove(index);
             } else {
-                panic!("map has no valid spot to place a single_shop");
+                return Err("map has no valid spot to place a single_shop".into());
             }
         }
 
@@ -563,13 +580,19 @@ impl Generator {
 
                 locations.remove(index);
             } else {
-                panic!("map has no valid spot to place a multi_shop");
+                return Err("map has no valid spot to place a multi_shop".into());
             }
         }
+        Ok(())
     }
 
-    fn place_non_important_rooms(&self, map: &mut Map, area: i32, rng: &mut ChaCha8Rng) {
-        let mut locations = self.create_list_of_suitable_rooms(map, area, true, false);
+    fn place_non_important_rooms(
+        &self,
+        map: &mut Map,
+        area: i32,
+        rng: &mut ChaCha8Rng,
+    ) -> Result<(), TGLError> {
+        let mut locations = self.create_list_of_suitable_rooms(map, area, true, false)?;
 
         // place save room
         if area <= 1 {
@@ -582,12 +605,12 @@ impl Generator {
 
                 locations.remove(index);
             } else {
-                panic!("map has no valid spot to place a save room");
+                return Err("map has no valid spot to place a save room".into());
             }
         }
 
         // place text rooms
-        let textrooms = items::item_library::get_text_block(area);
+        let textrooms = items::item_library::get_text_block(area)?;
 
         for item in &textrooms {
             if !locations.is_empty() {
@@ -600,7 +623,7 @@ impl Generator {
 
                 locations.remove(index);
             } else {
-                panic!("map has no valid spot to place a text room");
+                return Err("map has no valid spot to place a text room".into());
             }
         }
 
@@ -612,14 +635,20 @@ impl Generator {
             map.data[[*y_pos, *x_pos]].block_set = Some(items::item_library::get_p_chip_room());
             map.data[[*y_pos, *x_pos]].chip_tile = true;
         }
+        Ok(())
     }
 
-    pub fn place_cardinal_directions(&self, map: &mut Map, rng: &mut ChaCha8Rng) {
+    pub fn place_cardinal_directions(
+        &self,
+        map: &mut Map,
+        rng: &mut ChaCha8Rng,
+    ) -> Result<(), TGLError> {
         // Find all rooms on ring
+        let err = "an option that was expected to be Some was None in place_carrdinal directions";
         let mut ring_rooms = Vec::new();
         for y_pos in 0..24 {
             for x_pos in 0..24 {
-                if map.data[[y_pos, x_pos]].area.unwrap() == 0
+                if map.data[[y_pos, x_pos]].area.ok_or(tgl_error(err))? == 0
                     && map.data[[y_pos, x_pos]].avoid_special
                     && map.data[[y_pos, x_pos]].room_type == RoomType::Normal
                     && map.data[[y_pos, x_pos]].accessible
@@ -632,16 +661,16 @@ impl Generator {
         // Find the farthest points
         let (mut north_y, mut south_y, mut west_x, mut east_x) = (None, None, None, None);
         for &(y_pos, x_pos) in &ring_rooms {
-            if north_y.is_none() || y_pos < north_y.unwrap() {
+            if north_y.is_none() || y_pos < north_y.ok_or(tgl_error(err))? {
                 north_y = Some(y_pos);
             }
-            if south_y.is_none() || y_pos > south_y.unwrap() {
+            if south_y.is_none() || y_pos > south_y.ok_or(tgl_error(err))? {
                 south_y = Some(y_pos);
             }
-            if west_x.is_none() || x_pos < west_x.unwrap() {
+            if west_x.is_none() || x_pos < west_x.ok_or(tgl_error(err))? {
                 west_x = Some(x_pos);
             }
-            if east_x.is_none() || x_pos > east_x.unwrap() {
+            if east_x.is_none() || x_pos > east_x.ok_or(tgl_error(err))? {
                 east_x = Some(x_pos);
             }
         }
@@ -683,11 +712,11 @@ impl Generator {
         for &(y_pos, x_pos) in &ring_rooms {
             if Some(y_pos) == north_y {
                 let distance_away = (north_avg - x_pos as f64).abs();
-                if north_room_distance.is_none() || distance_away < north_room_distance.unwrap() {
-                    north_room = Some((y_pos, x_pos));
-                    north_room_distance = Some(distance_away);
-                } else if (north_avg - x_pos as f64).abs() == north_room_distance.unwrap()
-                    && rng.gen_bool(0.5)
+                if (north_room_distance.is_none()
+                    || distance_away < north_room_distance.ok_or(tgl_error(err))?)
+                    || ((north_avg - x_pos as f64).abs()
+                        == north_room_distance.ok_or(tgl_error(err))?
+                        && rng.gen_bool(0.5))
                 {
                     north_room = Some((y_pos, x_pos));
                     north_room_distance = Some(distance_away);
@@ -696,11 +725,11 @@ impl Generator {
 
             if Some(y_pos) == south_y {
                 let distance_away = (south_avg - x_pos as f64).abs();
-                if south_room_distance.is_none() || distance_away < south_room_distance.unwrap() {
-                    south_room = Some((y_pos, x_pos));
-                    south_room_distance = Some(distance_away);
-                } else if (south_avg - x_pos as f64).abs() == south_room_distance.unwrap()
-                    && rng.gen_bool(0.5)
+                if (south_room_distance.is_none()
+                    || distance_away < south_room_distance.ok_or(tgl_error(err))?)
+                    || ((south_avg - x_pos as f64).abs()
+                        == south_room_distance.ok_or(tgl_error(err))?
+                        && rng.gen_bool(0.5))
                 {
                     south_room = Some((y_pos, x_pos));
                     south_room_distance = Some(distance_away);
@@ -709,11 +738,11 @@ impl Generator {
 
             if Some(x_pos) == west_x {
                 let distance_away = (west_avg - y_pos as f64).abs();
-                if west_room_distance.is_none() || distance_away < west_room_distance.unwrap() {
-                    west_room = Some((y_pos, x_pos));
-                    west_room_distance = Some(distance_away);
-                } else if (west_avg - y_pos as f64).abs() == west_room_distance.unwrap()
-                    && rng.gen_bool(0.5)
+                if (west_room_distance.is_none()
+                    || distance_away < west_room_distance.ok_or(tgl_error(err))?)
+                    || ((west_avg - y_pos as f64).abs()
+                        == west_room_distance.ok_or(tgl_error(err))?
+                        && rng.gen_bool(0.5))
                 {
                     west_room = Some((y_pos, x_pos));
                     west_room_distance = Some(distance_away);
@@ -722,11 +751,11 @@ impl Generator {
 
             if Some(x_pos) == east_x {
                 let distance_away = (east_avg - y_pos as f64).abs();
-                if east_room_distance.is_none() || distance_away < east_room_distance.unwrap() {
-                    east_room = Some((y_pos, x_pos));
-                    east_room_distance = Some(distance_away);
-                } else if (east_avg - y_pos as f64).abs() == east_room_distance.unwrap()
-                    && rng.gen_bool(0.5)
+                if (east_room_distance.is_none()
+                    || distance_away < east_room_distance.ok_or(tgl_error(err))?)
+                    || ((east_avg - y_pos as f64).abs()
+                        == east_room_distance.ok_or(tgl_error(err))?
+                        && rng.gen_bool(0.5))
                 {
                     east_room = Some((y_pos, x_pos));
                     east_room_distance = Some(distance_away);
@@ -735,17 +764,18 @@ impl Generator {
         }
 
         if let Some((y, x)) = north_room {
-            map.data[[y, x]].block_set = Some(maze::items::item_library::get_cardinal_letter("N"));
+            map.data[[y, x]].block_set = Some(maze::items::item_library::get_cardinal_letter("N")?);
         }
         if let Some((y, x)) = south_room {
-            map.data[[y, x]].block_set = Some(maze::items::item_library::get_cardinal_letter("S"));
+            map.data[[y, x]].block_set = Some(maze::items::item_library::get_cardinal_letter("S")?);
         }
         if let Some((y, x)) = east_room {
-            map.data[[y, x]].block_set = Some(maze::items::item_library::get_cardinal_letter("E"));
+            map.data[[y, x]].block_set = Some(maze::items::item_library::get_cardinal_letter("E")?);
         }
         if let Some((y, x)) = west_room {
-            map.data[[y, x]].block_set = Some(maze::items::item_library::get_cardinal_letter("W"));
+            map.data[[y, x]].block_set = Some(maze::items::item_library::get_cardinal_letter("W")?);
         }
+        Ok(())
     }
 
     fn place_corridor(
@@ -754,7 +784,7 @@ impl Generator {
         locations: &mut Vec<(usize, usize)>,
         map: &mut Map,
         rng: &mut ChaCha8Rng,
-    ) {
+    ) -> Result<(), TGLError> {
         if !locations.is_empty() {
             let index = rng.gen_range(0..locations.len());
 
@@ -765,18 +795,20 @@ impl Generator {
 
             locations.remove(index);
         } else {
-            panic!("map has no valid spot to place a corridor");
+            return Err("map has no valid spot to place a corridor".into());
         }
+        Ok(())
     }
 
-    fn placestarting_point_rooms(&self, map: &mut Map) {
+    fn placestarting_point_rooms(&self, map: &mut Map) -> Result<(), TGLError> {
+        let err = "area was None in placestarting_point_rooms";
         for y_pos in 0..24 {
             for x_pos in 0..24 {
-                if (map.data[[y_pos, x_pos]].area.unwrap() >= 1
-                    && map.data[[y_pos, x_pos]].area.unwrap() <= 10)
+                if (map.data[[y_pos, x_pos]].area.ok_or(tgl_error(err))? >= 1
+                    && map.data[[y_pos, x_pos]].area.ok_or(tgl_error(err))? <= 10)
                     && (map.data[[y_pos, x_pos]].starting_point)
                 {
-                    if map.data[[y_pos, x_pos]].area.unwrap() == 1 {
+                    if map.data[[y_pos, x_pos]].area.ok_or(tgl_error(err))? == 1 {
                         map.data[[y_pos, x_pos]].room_type = RoomType::Corridor;
                         map.data[[y_pos, x_pos]].enemy_type = 1;
                     } else {
@@ -785,21 +817,17 @@ impl Generator {
                 }
             }
         }
+        Ok(())
     }
 
-    fn populate_enemies(&self, map: &mut Map, empty_room_odds: u8, rng: &mut ChaCha8Rng) {
+    fn populate_enemies(&self, map: &mut Map, empty_room_odds: f64, rng: &mut ChaCha8Rng) {
         for y_pos in 0..24 {
             for x_pos in 0..24 {
                 if map.data[[y_pos, x_pos]].accessible
                     && (map.data[[y_pos, x_pos]].room_type == RoomType::Normal)
+                    && empty_room_odds > rng.gen_range(0.0..1.0)
                 {
-                    if empty_room_odds > 0 {
-                        if rng.gen_range(1..=empty_room_odds) != 1 {
-                            map.data[[y_pos, x_pos]].enemy_type = rng.gen_range(1..=47);
-                        }
-                    } else {
-                        map.data[[y_pos, x_pos]].enemy_type = rng.gen_range(1..=47);
-                    }
+                    map.data[[y_pos, x_pos]].enemy_type = rng.gen_range(1..=47);
                 }
             }
         }
@@ -854,12 +882,15 @@ impl Generator {
         ////2F one red spider boss and 2 blue spinnies
     }
 
-    fn place_area_decorations(&self, map: &mut Map, rng: &mut ChaCha8Rng) {
+    fn place_area_decorations(&self, map: &mut Map, rng: &mut ChaCha8Rng) -> Result<(), TGLError> {
         let mut starting_rooms = vec![];
         for y_pos in 0..24 {
             for x_pos in 0..24 {
                 if (map.data[[y_pos, x_pos]].starting_point)
-                    && (map.data[[y_pos, x_pos]].area.unwrap() != 0)
+                    && (map.data[[y_pos, x_pos]]
+                        .area
+                        .ok_or(tgl_error("area was None in place_area_decorations"))?
+                        != 0)
                 {
                     starting_rooms.push((y_pos, x_pos));
                 }
@@ -875,12 +906,12 @@ impl Generator {
                 if chips == 0 {
                     // No
                     map.data[[y_pos - 1, x_pos]].block_set = Some(
-                        maze::items::item_library::get_random_room_block(false, 1, 2, rng),
+                        maze::items::item_library::get_random_room_block(false, 1, 2, rng)?,
                     );
                     map.data[[y_pos - 1, x_pos]].chip_tile = false;
                 } else {
                     map.data[[y_pos - 1, x_pos]].block_set = Some(
-                        maze::items::item_library::get_random_room_block(true, 1, 2, rng),
+                        maze::items::item_library::get_random_room_block(true, 1, 2, rng)?,
                     );
                     map.data[[y_pos - 1, x_pos]].chip_tile = true;
                 }
@@ -894,12 +925,12 @@ impl Generator {
                 if chips == 0 {
                     // No
                     map.data[[y_pos + 1, x_pos]].block_set = Some(
-                        maze::items::item_library::get_random_room_block(false, 1, 1, rng),
+                        maze::items::item_library::get_random_room_block(false, 1, 1, rng)?,
                     );
                     map.data[[y_pos + 1, x_pos]].chip_tile = false;
                 } else {
                     map.data[[y_pos + 1, x_pos]].block_set = Some(
-                        maze::items::item_library::get_random_room_block(true, 1, 1, rng),
+                        maze::items::item_library::get_random_room_block(true, 1, 1, rng)?,
                     );
                     map.data[[y_pos + 1, x_pos]].chip_tile = true;
                 }
@@ -913,12 +944,12 @@ impl Generator {
                 if chips == 0 {
                     // No
                     map.data[[y_pos, x_pos - 1]].block_set = Some(
-                        maze::items::item_library::get_random_room_block(false, 1, 4, rng),
+                        maze::items::item_library::get_random_room_block(false, 1, 4, rng)?,
                     );
                     map.data[[y_pos, x_pos - 1]].chip_tile = false;
                 } else {
                     map.data[[y_pos, x_pos - 1]].block_set = Some(
-                        maze::items::item_library::get_random_room_block(true, 1, 4, rng),
+                        maze::items::item_library::get_random_room_block(true, 1, 4, rng)?,
                     );
                     map.data[[y_pos, x_pos - 1]].chip_tile = true;
                 }
@@ -932,20 +963,25 @@ impl Generator {
                 if chips == 0 {
                     // No
                     map.data[[y_pos, x_pos + 1]].block_set = Some(
-                        maze::items::item_library::get_random_room_block(false, 1, 3, rng),
+                        maze::items::item_library::get_random_room_block(false, 1, 3, rng)?,
                     );
                     map.data[[y_pos, x_pos + 1]].chip_tile = false;
                 } else {
                     map.data[[y_pos, x_pos + 1]].block_set = Some(
-                        maze::items::item_library::get_random_room_block(true, 1, 3, rng),
+                        maze::items::item_library::get_random_room_block(true, 1, 3, rng)?,
                     );
                     map.data[[y_pos, x_pos + 1]].chip_tile = true;
                 }
             }
         }
+        Ok(())
     }
 
-    fn place_corridor_decorations(&self, map: &mut Map, rng: &mut ChaCha8Rng) {
+    fn place_corridor_decorations(
+        &self,
+        map: &mut Map,
+        rng: &mut ChaCha8Rng,
+    ) -> Result<(), TGLError> {
         let mut corridor = vec![];
         for y_pos in 0..24 {
             for x_pos in 0..24 {
@@ -961,7 +997,7 @@ impl Generator {
                 && map.data[[y_pos - 1, x_pos]].block_set.is_none()
             {
                 map.data[[y_pos - 1, x_pos]].block_set = Some(
-                    maze::items::item_library::get_random_room_block(false, 2, 2, rng),
+                    maze::items::item_library::get_random_room_block(false, 2, 2, rng)?,
                 );
                 map.data[[y_pos - 1, x_pos]].chip_tile = false;
             }
@@ -971,7 +1007,7 @@ impl Generator {
                 && map.data[[y_pos + 1, x_pos]].block_set.is_none()
             {
                 map.data[[y_pos + 1, x_pos]].block_set = Some(
-                    maze::items::item_library::get_random_room_block(false, 2, 1, rng),
+                    maze::items::item_library::get_random_room_block(false, 2, 1, rng)?,
                 );
                 map.data[[y_pos + 1, x_pos]].chip_tile = false;
             }
@@ -981,7 +1017,7 @@ impl Generator {
                 && map.data[[y_pos, x_pos - 1]].block_set.is_none()
             {
                 map.data[[y_pos, x_pos - 1]].block_set = Some(
-                    maze::items::item_library::get_random_room_block(false, 2, 4, rng),
+                    maze::items::item_library::get_random_room_block(false, 2, 4, rng)?,
                 );
                 map.data[[y_pos, x_pos - 1]].chip_tile = false;
             }
@@ -991,20 +1027,21 @@ impl Generator {
                 && map.data[[y_pos, x_pos + 1]].block_set.is_none()
             {
                 map.data[[y_pos, x_pos + 1]].block_set = Some(
-                    maze::items::item_library::get_random_room_block(false, 2, 3, rng),
+                    maze::items::item_library::get_random_room_block(false, 2, 3, rng)?,
                 );
                 map.data[[y_pos, x_pos + 1]].chip_tile = false;
             }
         }
+        Ok(())
     }
 
     fn place_random_decorations(
         &self,
         map: &mut Map,
-        decoration_odds: u8,
-        chip_odds: u8,
+        decoration_odds: f64,
+        chip_odds: f64,
         rng: &mut ChaCha8Rng,
-    ) {
+    ) -> Result<(), TGLError> {
         for y_pos in 0..24 {
             for x_pos in 0..24 {
                 if (map.data[[y_pos, x_pos]].accessible
@@ -1014,31 +1051,23 @@ impl Generator {
                     let mut decorate = false;
                     let mut usechips = false;
 
-                    if decoration_odds > 0 {
-                        if rng.gen_range(1..=decoration_odds) == 1 {
-                            decorate = true;
-                        }
-                    } else {
+                    if decoration_odds > rng.gen_range(0.0..1.0) {
                         decorate = true;
                     }
 
                     if decorate {
-                        if chip_odds > 0 {
-                            if rng.gen_range(1..=chip_odds) == 1 {
-                                usechips = true;
-                            }
-                        } else {
+                        if chip_odds > rng.gen_range(0.0..1.0) {
                             usechips = true;
                         }
 
                         if usechips {
                             map.data[[y_pos, x_pos]].block_set = Some(
-                                maze::items::item_library::get_random_room_block(true, 0, 0, rng),
+                                maze::items::item_library::get_random_room_block(true, 0, 0, rng)?,
                             );
                             map.data[[y_pos, x_pos]].chip_tile = true;
                         } else {
                             map.data[[y_pos, x_pos]].block_set = Some(
-                                maze::items::item_library::get_random_room_block(false, 0, 0, rng),
+                                maze::items::item_library::get_random_room_block(false, 0, 0, rng)?,
                             );
                             map.data[[y_pos, x_pos]].chip_tile = false;
                         }
@@ -1046,6 +1075,7 @@ impl Generator {
                 }
             }
         }
+        Ok(())
     }
 
     fn create_list_of_suitable_rooms(
@@ -1054,12 +1084,15 @@ impl Generator {
         area: i32,
         discard_special: bool,
         allow_overwrite_entry: bool,
-    ) -> Vec<(usize, usize)> {
+    ) -> Result<Vec<(usize, usize)>, TGLError> {
         let mut suitable_rooms = vec![];
 
         for y_pos in 0..24 {
             for x_pos in 0..24 {
-                if (map.data[[y_pos, x_pos]].area.unwrap() == area)
+                if (map.data[[y_pos, x_pos]]
+                    .area
+                    .ok_or(tgl_error("area was none in creat_list_of_suitable_rooms"))?
+                    == area)
                     && (map.data[[y_pos, x_pos]].accessible)
                     && map.data[[y_pos, x_pos]].block_set.is_none()
                     && ((map.data[[y_pos, x_pos]].room_type == RoomType::Normal)
@@ -1074,7 +1107,7 @@ impl Generator {
                 }
             }
         }
-        suitable_rooms
+        Ok(suitable_rooms)
     }
 
     fn add_connections(
@@ -1085,13 +1118,14 @@ impl Generator {
         one_way: bool,
         portal_only: bool,
         rng: &mut ChaCha8Rng,
-    ) {
+    ) -> Result<(), TGLError> {
+        let err = "Area was none in add_connections";
         let mut desired_connections = desired_connections;
         // find all the points in the area
         let mut rooms_in_zone = vec![];
         for y_pos in 0..24 {
             for x_pos in 0..24 {
-                if (map.data[[y_pos, x_pos]].area.unwrap() == zone)
+                if (map.data[[y_pos, x_pos]].area.ok_or(tgl_error(err))? == zone)
                     && (map.data[[y_pos, x_pos]].accessible)
                 {
                     rooms_in_zone.push((y_pos, x_pos));
@@ -1109,19 +1143,19 @@ impl Generator {
             let (y_pos, x_pos) = *room_to_edit;
 
             let mut can_go_up = y_pos > 0
-                && map.data[[y_pos - 1, x_pos]].area.unwrap() == zone
+                && map.data[[y_pos - 1, x_pos]].area.ok_or(tgl_error(err))? == zone
                 && map.data[[y_pos - 1, x_pos]].accessible
                 && !map.data[[y_pos, x_pos]].exit_up;
             let mut can_go_left = x_pos > 0
-                && map.data[[y_pos, x_pos - 1]].area.unwrap() == zone
+                && map.data[[y_pos, x_pos - 1]].area.ok_or(tgl_error(err))? == zone
                 && map.data[[y_pos, x_pos - 1]].accessible
                 && !map.data[[y_pos, x_pos]].exit_left;
             let mut can_go_right = x_pos < 24 - 1
-                && map.data[[y_pos, x_pos + 1]].area.unwrap() == zone
+                && map.data[[y_pos, x_pos + 1]].area.ok_or(tgl_error(err))? == zone
                 && map.data[[y_pos, x_pos + 1]].accessible
                 && !map.data[[y_pos, x_pos]].exit_right;
             let mut can_go_down = y_pos < 24 - 1
-                && map.data[[y_pos + 1, x_pos]].area.unwrap() == zone
+                && map.data[[y_pos + 1, x_pos]].area.ok_or(tgl_error(err))? == zone
                 && map.data[[y_pos + 1, x_pos]].accessible
                 && !map.data[[y_pos, x_pos]].exit_down;
 
@@ -1209,5 +1243,6 @@ impl Generator {
                 }
             }
         }
+        Ok(())
     }
 }

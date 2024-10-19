@@ -1,15 +1,16 @@
-use crate::corridor::shuffle_bosses::OutputBoss;
+use crate::corridor::shuffle_bosses::BossLists;
 use crate::patcher::Patcher;
+use crate::tgl_error::{tgl_error, TGLError};
 use rand::seq::SliceRandom;
 use rand_chacha::ChaCha8Rng;
 
 pub fn shuffle_corridors(
     patcher: &mut Patcher,
     shuffle_corridors: bool,
-    shuffled_bosses: &Option<(Vec<OutputBoss>, Vec<OutputBoss>, Option<OutputBoss>)>,
+    shuffled_bosses: &Option<BossLists>,
     log: bool,
     rng: &mut ChaCha8Rng,
-) {
+) -> Result<(), TGLError> {
     let mut table: Vec<[u32; 4]> = vec![
         [1, 0x40, 0x509C, 0x21],
         [2, 0x45, 0x7F9D, 0x21],
@@ -38,14 +39,14 @@ pub fn shuffle_corridors(
     let mut c21_final_id = None;
     if let Some(shuffled_bosses) = shuffled_bosses {
         for (x, row) in table.iter_mut().enumerate() {
-            if let Some(entry) = &shuffled_bosses.0.get(x) {
+            if let Some(entry) = &shuffled_bosses.stage_bosses.get(x) {
                 if entry.id != u32::MAX {
                     row[1] = entry.id;
                 }
             }
         }
 
-        if let Some(c21_final) = &shuffled_bosses.1.last() {
+        if let Some(c21_final) = &shuffled_bosses.c21_bosses.last() {
             let id = c21_final.id;
             c21_final_id = Some(id);
             let boss_str = &format!("{:02X}", id);
@@ -54,7 +55,7 @@ pub fn shuffle_corridors(
             patcher.add_change(boss_str, "d3ac");
         }
 
-        if let Some(final_boss) = &shuffled_bosses.2 {
+        if let Some(final_boss) = &shuffled_bosses.final_boss {
             final_id = Some(final_boss.id);
         }
     }
@@ -80,7 +81,10 @@ pub fn shuffle_corridors(
     //place the final boss into the string
     if let Some(id) = final_id {
         // try to shove the boss string into the c21 slot
-        bosses.push_str(&format!("{:02X}", c21_final_id.unwrap()));
+        bosses.push_str(&format!(
+            "{:02X}",
+            c21_final_id.ok_or(tgl_error("c21_final_id was null"))?
+        ));
         bosses.push_str(&format!("{:02X}", id));
     }
 
@@ -91,6 +95,8 @@ pub fn shuffle_corridors(
     patcher.add_change(&bosses, "d162");
     patcher.add_change(&pointers, "10029");
     patcher.add_change(&graphics, "1ef66");
+
+    Ok(())
 
     //change the boss tied to the corridor
     //boss table is d161 and starts at 0, we're not shifting 0 for the moment

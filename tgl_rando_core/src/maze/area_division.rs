@@ -1,3 +1,4 @@
+use crate::tgl_error::TGLError;
 use rand::Rng;
 use rand_chacha::ChaCha8Rng;
 
@@ -5,9 +6,9 @@ fn get_library_size() -> i32 {
     1
 }
 
-fn get_library_entry(item: i32) -> Vec<Vec<i32>> {
+fn get_library_entry(item: i32) -> Result<Vec<Vec<i32>>, TGLError> {
     match item {
-        0 => vec![
+        0 => Ok(vec![
             vec![
                 1, 1, 1, 1, -1, 2, 2, 2, 2, 2, 2, 2, -1, 3, 3, 3, 3, 3, 3, -1, 4, 4, 4, 4,
             ],
@@ -84,16 +85,16 @@ fn get_library_entry(item: i32) -> Vec<Vec<i32>> {
             vec![
                 7, 7, 7, 7, -1, 8, 8, 8, 8, 8, 8, 8, -1, 9, 9, 9, 9, 9, 9, -1, 10, 10, 10, 10,
             ],
-        ],
+        ]),
         // Add other cases if needed
-        _ => panic!("Requested Invalid Map Template"),
+        _ => Err("Requested Invalid Map Template".into()),
     }
 }
 
-pub fn get_sub_division(rng: &mut ChaCha8Rng) -> Vec<Vec<i32>> {
+pub fn get_sub_division(rng: &mut ChaCha8Rng) -> Result<Vec<Vec<i32>>, TGLError> {
     // select from a template
 
-    let mut template = get_library_entry(rng.gen_range(0..get_library_size()));
+    let mut template = get_library_entry(rng.gen_range(0..get_library_size()))?;
 
     let should_flip = rng.gen_range(0..=1);
     if should_flip == 1 {
@@ -103,10 +104,10 @@ pub fn get_sub_division(rng: &mut ChaCha8Rng) -> Vec<Vec<i32>> {
     let rotate_times = rng.gen_range(0..=3);
 
     for _n in 0..=rotate_times {
-        rotate_90_degrees(&mut template);
+        rotate_90_degrees(&template);
     }
 
-    template
+    Ok(template)
 }
 
 fn flip_horizontally_in_place(matrix: &mut Vec<Vec<i32>>) {
@@ -115,19 +116,20 @@ fn flip_horizontally_in_place(matrix: &mut Vec<Vec<i32>>) {
     }
 }
 
-fn rotate_90_degrees(matrix: &Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+#[allow(clippy::needless_range_loop)]
+fn rotate_90_degrees(matrix: &[Vec<i32>]) -> Vec<Vec<i32>> {
     let height = matrix.len();
     let width = matrix[0].len();
 
     // Create a new matrix with swapped dimensions
     let mut rotated_matrix = vec![vec![0; height]; width];
 
+    // I much prefer a range loop for this since i have 2 matrices and i am editing
     for i in 0..height {
         for j in 0..width {
             rotated_matrix[j][height - 1 - i] = matrix[i][j];
         }
     }
-
     rotated_matrix
 }
 

@@ -1,6 +1,10 @@
+mod gui_error;
+
+use crate::gui_error::GuiError;
 use dioxus::prelude::*;
 use tgl_rando_core::config::*;
 use tgl_rando_core::patcher::Patcher;
+use tgl_rando_core::tgl_error::TGLError;
 use tgl_rando_core::{generate, seed};
 
 fn main() {
@@ -25,13 +29,41 @@ fn app() -> Element {
     let color_cfg = use_signal(ColorOptions::default);
     let hue_cfg = use_signal(HueOptions::default);
 
+    let mut advanced_visible = use_signal(|| false);
+    let map_cfg = use_signal(MapConfig::default);
+    let item_cfg = use_signal(ItemConfig::default);
+
+    let mut err_string = use_signal(String::new);
+
     rsx! {
         div {
             corridor_config { c: corridor_cfg }
             boss_config { c: boss_cfg }
             qol_hacks { c: qol_cfg }
             color_config { c: color_cfg, h: hue_cfg }
+
+            h3 { "Advanced options." }
+            input {
+                r#type: "checkbox",
+                checked: advanced_visible(),
+                id: "advanced_options",
+                oninput: move |event| { advanced_visible.set(event.value().parse().unwrap_or(false)) }
+            }
+            label { "for": "advanced_options",
+                "Show Advanced Options, not checked for sanity so may produce errors or perhaps broken roms."
+            }
+            br {}
+
+            if advanced_visible() {
+                map_config { c: map_cfg }
+                item_config { c: item_cfg }
+            }
+
             h3 { "Generate" }
+
+            if !err_string().is_empty() {
+                h4 { color: "Red", "Error: {err_string}" }
+            }
             input {
                 // tell the input to pick a file
                 r#type: "file",
@@ -66,11 +98,13 @@ fn app() -> Element {
                         ColorStrategy::Random => ColorStrategy::Random,
                         ColorStrategy::ColorTheory(_) => ColorStrategy::ColorTheory(hue_cfg()),
                     };
-                    patch_file(
+                    match patch_file(
                         "tgl_rando.nes",
                         &(uploaded.read()),
                         Config {
                             corridor_config: corridor_cfg(),
+                            map_config: map_cfg(),
+                            item_config: item_cfg(),
                             qol_hacks: qol_cfg(),
                             color_options: ColorOptions {
                                 color_strategy: colors,
@@ -80,7 +114,15 @@ fn app() -> Element {
                             log: false,
                             seed: seed::make_seed(),
                         },
-                    )
+                        err_string,
+                    ) {
+                        Ok(_) => {
+                            err_string.set("".to_string());
+                        }
+                        Err(e) => {
+                            err_string.set(e.message);
+                        }
+                    }
                 },
                 "Generate"
             }
@@ -104,7 +146,7 @@ fn corridor_config(c: Signal<CorridorConfig>) -> Element {
                 id: "shuffleCorridors",
                 oninput: move |event| {
                     c.set(CorridorConfig {
-                        shuffle_corridors: event.value().parse().unwrap(),
+                        shuffle_corridors: event.value().parse().unwrap_or(false),
                         ..c()
                     })
                 }
@@ -118,7 +160,7 @@ fn corridor_config(c: Signal<CorridorConfig>) -> Element {
                 id: "shuffle_ground",
                 oninput: move |event| {
                     c.set(CorridorConfig {
-                        shuffle_ground: event.value().parse().unwrap(),
+                        shuffle_ground: event.value().parse().unwrap_or(false),
                         ..c()
                     })
                 }
@@ -132,7 +174,7 @@ fn corridor_config(c: Signal<CorridorConfig>) -> Element {
                 id: "shuffle_skies",
                 oninput: move |event| {
                     c.set(CorridorConfig {
-                        shuffle_skies: event.value().parse().unwrap(),
+                        shuffle_skies: event.value().parse().unwrap_or(false),
                         ..c()
                     })
                 }
@@ -159,7 +201,7 @@ fn boss_config(c: Signal<BossConfig>) -> Element {
                 id: "shuffle_bosses",
                 oninput: move |event| {
                     c.set(BossConfig {
-                        shuffle_bosses: event.value().parse().unwrap(),
+                        shuffle_bosses: event.value().parse().unwrap_or(false),
                         ..c()
                     })
                 }
@@ -173,7 +215,7 @@ fn boss_config(c: Signal<BossConfig>) -> Element {
                 id: "shuffle_final_boss",
                 oninput: move |event| {
                     c.set(BossConfig {
-                        shuffle_final_boss: event.value().parse().unwrap(),
+                        shuffle_final_boss: event.value().parse().unwrap_or(false),
                         ..c()
                     })
                 }
@@ -187,7 +229,7 @@ fn boss_config(c: Signal<BossConfig>) -> Element {
                 id: "rebalance_bosses",
                 oninput: move |event| {
                     c.set(BossConfig {
-                        rebalance_bosses: event.value().parse().unwrap(),
+                        rebalance_bosses: event.value().parse().unwrap_or(false),
                         ..c()
                     })
                 }
@@ -203,7 +245,7 @@ fn boss_config(c: Signal<BossConfig>) -> Element {
                 id: "randomize_boss_health",
                 oninput: move |event| {
                     c.set(BossConfig {
-                        randomize_boss_health: event.value().parse().unwrap(),
+                        randomize_boss_health: event.value().parse().unwrap_or(false),
                         ..c()
                     })
                 }
@@ -232,7 +274,7 @@ fn qol_hacks(c: Signal<QOLHacks>) -> Element {
                 id: "faster_starting_fire",
                 oninput: move |event| {
                     c.set(QOLHacks {
-                        faster_starting_fire: event.value().parse().unwrap(),
+                        faster_starting_fire: event.value().parse().unwrap_or(false),
                         ..c()
                     })
                 }
@@ -246,7 +288,7 @@ fn qol_hacks(c: Signal<QOLHacks>) -> Element {
                 id: "fix_hyper_laser",
                 oninput: move |event| {
                     c.set(QOLHacks {
-                        fix_hyper_laser: event.value().parse().unwrap(),
+                        fix_hyper_laser: event.value().parse().unwrap_or(false),
                         ..c()
                     })
                 }
@@ -260,7 +302,7 @@ fn qol_hacks(c: Signal<QOLHacks>) -> Element {
                 id: "enemy_erasers_unlocked_from_start",
                 oninput: move |event| {
                     c.set(QOLHacks {
-                        enemy_erasers_unlocked_from_start: event.value().parse().unwrap(),
+                        enemy_erasers_unlocked_from_start: event.value().parse().unwrap_or(false),
                         ..c()
                     })
                 }
@@ -274,7 +316,7 @@ fn qol_hacks(c: Signal<QOLHacks>) -> Element {
                 id: "remove_flash",
                 oninput: move |event| {
                     c.set(QOLHacks {
-                        remove_flash: event.value().parse().unwrap(),
+                        remove_flash: event.value().parse().unwrap_or(false),
                         ..c()
                     })
                 }
@@ -340,7 +382,7 @@ fn color_config(c: Signal<ColorOptions>, h: Signal<HueOptions>) -> Element {
             id: "include_foreground",
             oninput: move |event| {
                 c.set(ColorOptions {
-                    include_foreground: event.value().parse().unwrap(),
+                    include_foreground: event.value().parse().unwrap_or(false),
                     ..c()
                 })
             }
@@ -359,7 +401,7 @@ fn hue_config(c: Signal<ColorOptions>, h: Signal<HueOptions>) -> Element {
             disabled: c().color_strategy == ColorStrategy::Random,
             oninput: move |event| {
                 h.set(HueOptions {
-                    rotate_hue: event.value().parse().unwrap(),
+                    rotate_hue: event.value().parse().unwrap_or(false),
                     ..h()
                 })
             }
@@ -401,14 +443,329 @@ fn hue_config(c: Signal<ColorOptions>, h: Signal<HueOptions>) -> Element {
     }
 }
 
-pub fn patch_file(name: &str, content: &Vec<u8>, cfg: Config) {
-    let patcher = setup(&cfg);
-    let rom = patcher.patch_u8_vec(content);
-    trigger_download(name, rom);
+// weapon_size: 4,
+// blue: 9,
+// red: 10,
+// shield: 6,
+// force_shields: true,
+// guns: 5,
+// rapid_fires: 5,
+// etanks: 3,
+// enemy_erasers: 5,
+#[component]
+fn item_config(c: Signal<ItemConfig>) -> Element {
+    rsx! {
+        div {
+            h3 { "Item Config" }
+            input {
+                r#type: "range",
+                min: 0,
+                max: 6,
+                value: c().weapon_size as i64,
+                oninput: move |event| {
+                    c.set(ItemConfig {
+                        weapon_size: event.value().parse().unwrap_or(c().weapon_size),
+                        ..c()
+                    })
+                },
+                id: "weapon_size"
+            }
+            label { "for": "weapon_size", "{c().weapon_size} - Forced copies of each weapon" }
+            br {}
+
+            input {
+                r#type: "range",
+                min: 0,
+                max: 20,
+                value: c().blue as i64,
+                oninput: move |event| {
+                    c.set(ItemConfig {
+                        blue: event.value().parse().unwrap_or(c().blue),
+                        ..c()
+                    })
+                },
+                id: "blue"
+            }
+            label { "for": "blue", "{c().blue} - Blue Landers" }
+            br {}
+
+            input {
+                r#type: "range",
+                min: 0,
+                max: 20,
+                value: c().red as i64,
+                oninput: move |event| {
+                    c.set(ItemConfig {
+                        red: event.value().parse().unwrap_or(c().red),
+                        ..c()
+                    })
+                },
+                id: "red"
+            }
+            label { "for": "red", "{c().red} - Red Landers" }
+            br {}
+
+            input {
+                r#type: "range",
+                min: 0,
+                max: 20,
+                value: c().shield as i64,
+                oninput: move |event| {
+                    c.set(ItemConfig {
+                        shield: event.value().parse().unwrap_or(c().shield),
+                        ..c()
+                    })
+                },
+                id: "shield"
+            }
+            label { "for": "shield", "{c().shield} - Shields" }
+            br {}
+
+            input {
+                r#type: "checkbox",
+                checked: c().force_shields,
+                id: "force_shields",
+                oninput: move |event| {
+                    c.set(ItemConfig {
+                        force_shields: event.value().parse().unwrap_or(false),
+                        ..c()
+                    })
+                }
+            }
+            label { "for": "force_shields", "Force distribute 1 shield to every other area." }
+            br {}
+
+            input {
+                r#type: "range",
+                min: 0,
+                max: 20,
+                value: c().guns as i64,
+                oninput: move |event| {
+                    c.set(ItemConfig {
+                        guns: event.value().parse().unwrap_or(c().guns),
+                        ..c()
+                    })
+                },
+                id: "guns"
+            }
+            label { "for": "guns", "{c().guns} - Gun Powerups" }
+            br {}
+
+            input {
+                r#type: "range",
+                min: 0,
+                max: 20,
+                value: c().rapid_fires as i64,
+                oninput: move |event| {
+                    c.set(ItemConfig {
+                        rapid_fires: event.value().parse().unwrap_or(c().rapid_fires),
+                        ..c()
+                    })
+                },
+                id: "rapid_fires"
+            }
+            label { "for": "rapid_fires", "{c().rapid_fires} - Rapid Fires" }
+
+            br {}
+            input {
+                r#type: "range",
+                min: 0,
+                max: 20,
+                value: c().etanks as i64,
+                oninput: move |event| {
+                    c.set(ItemConfig {
+                        etanks: event.value().parse().unwrap_or(c().etanks),
+                        ..c()
+                    })
+                },
+                id: "etanks"
+            }
+            label { "for": "etanks", "{c().etanks} - Energy Tanks" }
+            br {}
+
+            input {
+                r#type: "range",
+                min: 0,
+                max: 20,
+                value: c().enemy_erasers as i64,
+                oninput: move |event| {
+                    c.set(ItemConfig {
+                        enemy_erasers: event.value().parse().unwrap_or(c().enemy_erasers),
+                        ..c()
+                    })
+                },
+                id: "enemy_erasers"
+            }
+            label { "for": "enemy_erasers", "{c().enemy_erasers} - Enemy Erasers" }
+            br {}
+        }
+    }
+}
+
+//currently excluded are the two shop sizes
+#[component]
+fn map_config(c: Signal<MapConfig>) -> Element {
+    rsx! {
+        div {
+            h3 { "Labyrinth Config" }
+            input {
+                r#type: "range",
+                min: 10,
+                max: c().max_area_size as i64,
+                value: c().min_area_size as i64,
+                oninput: move |event| {
+                    c.set(MapConfig {
+                        min_area_size: event.value().parse().unwrap_or(c().min_area_size),
+                        ..c()
+                    })
+                },
+                id: "min_area_size"
+            }
+            label { "for": "min_area_size", "{c().min_area_size} - Minimum Area Size" }
+            br {}
+
+            input {
+                r#type: "range",
+                min: c().min_area_size as i64,
+                max: 30,
+                value: c().max_area_size as i64,
+                oninput: move |event| {
+                    c.set(MapConfig {
+                        max_area_size: event.value().parse().unwrap_or(c().max_area_size),
+                        ..c()
+                    })
+                },
+                id: "max_area_size"
+            }
+            label { "for": "max_area_size", "{c().max_area_size} - Maximum Area Size" }
+            br {}
+
+            input {
+                r#type: "range",
+                min: 0,
+                max: 10,
+                value: c().desired_connections as i64,
+                oninput: move |event| {
+                    c.set(MapConfig {
+                        desired_connections: event
+                            .value()
+                            .parse()
+                            .unwrap_or(c().desired_connections),
+                        ..c()
+                    })
+                },
+                id: "desired_connections"
+            }
+            label { "for": "desired_connections", "{c().desired_connections} - Desired Connections" }
+            br {}
+
+            input {
+                r#type: "range",
+                min: 0,
+                max: 10,
+                value: c().desired_one_way_connections as i64,
+                oninput: move |event| {
+                    c.set(MapConfig {
+                        desired_one_way_connections: event
+                            .value()
+                            .parse()
+                            .unwrap_or(c().desired_one_way_connections),
+                        ..c()
+                    })
+                },
+                id: "desired_one_way_connections"
+            }
+            label { "for": "desired_one_way_connections",
+                "{c().desired_one_way_connections} - Desired One Way Connections"
+            }
+            br {}
+
+            input {
+                r#type: "checkbox",
+                checked: c().portal_only_one_ways,
+                id: "portal_only_one_ways",
+                oninput: move |event| {
+                    c.set(MapConfig {
+                        portal_only_one_ways: event.value().parse().unwrap_or(false),
+                        ..c()
+                    })
+                }
+            }
+            label { "for": "portal_only_one_ways", "One ways only on portal doors." }
+            br {}
+
+            input {
+                r#type: "range",
+                min: 0,
+                max: 1,
+                step: 0.01,
+                value: c().decoration_odds,
+                oninput: move |event| {
+                    c.set(MapConfig {
+                        decoration_odds: event.value().parse().unwrap_or(c().decoration_odds),
+                        ..c()
+                    })
+                },
+                id: "decoration_odds"
+            }
+            label { "for": "decoration_odds", "{c().decoration_odds * 100.0:1.0}% - Room Decoration Odds" }
+            br {}
+
+            input {
+                r#type: "range",
+                min: 0,
+                max: 1,
+                step: 0.01,
+                value: c().chip_odds,
+                oninput: move |event| {
+                    c.set(MapConfig {
+                        chip_odds: event.value().parse().unwrap_or(c().chip_odds),
+                        ..c()
+                    })
+                },
+                id: "chip_odds"
+            }
+            label { "for": "chip_odds", "{c().chip_odds * 100.0:1.0}% - Room Chip Odds" }
+            br {}
+
+            input {
+                r#type: "range",
+                min: 0,
+                max: 1,
+                step: 0.01,
+                value: c().empty_room_odds,
+                oninput: move |event| {
+                    c.set(MapConfig {
+                        empty_room_odds: event.value().parse().unwrap_or(c().empty_room_odds),
+                        ..c()
+                    })
+                },
+                id: "empty_room_odds"
+            }
+            label { "for": "empty_room_odds", "{c().empty_room_odds * 100.0:1.0}% - Empty Room Odds" }
+            br {}
+        }
+    }
+}
+
+pub fn patch_file(
+    name: &str,
+    content: &[u8],
+    cfg: Config,
+    error_string: Signal<String>,
+) -> Result<(), GuiError> {
+    let patcher = setup(&cfg)?;
+    let rom = patcher.patch_u8_vec(content)?;
+    trigger_download(name, rom, error_string)?;
+    Ok(())
 }
 
 //borrowed from dioxus discord user knickish
-pub fn trigger_download(name: &str, content: Vec<u8>) {
+pub fn trigger_download(
+    name: &str,
+    content: Vec<u8>,
+    mut error_string: Signal<String>,
+) -> Result<(), GuiError> {
     let eval = eval(
         r#"
         let filename = await dioxus.recv();
@@ -424,21 +781,24 @@ pub fn trigger_download(name: &str, content: Vec<u8>) {
         "#,
     );
 
-    eval.send(name.into()).unwrap();
-    eval.send(content.to_owned().into()).unwrap();
+    eval.send(name.into())?;
+    eval.send(content.to_owned().into())?;
 
     use_future(move || {
         to_owned![eval];
         async move {
-            eval.join().await.unwrap();
+            if eval.join().await.is_err() {
+                error_string.set("Error evaluating JS within trigger download".to_string());
+            }
         }
     });
+    Ok(())
 }
 
-fn setup(cfg: &Config) -> Patcher {
+fn setup(cfg: &Config) -> Result<Patcher, TGLError> {
     let mut patcher = Patcher::new();
 
-    generate(&mut patcher, cfg);
+    generate(&mut patcher, cfg)?;
 
-    patcher
+    Ok(patcher)
 }

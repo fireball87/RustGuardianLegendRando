@@ -1,4 +1,5 @@
 use crate::maze::room::{Room, RoomType};
+use crate::tgl_error::{tgl_error, TGLError};
 use ndarray::Array2;
 
 pub struct Map {
@@ -14,10 +15,10 @@ impl Map {
         Map { data }
     }
 
-    pub fn write_hex(&self, log: bool) -> String {
+    pub fn write_hex(&self, log: bool) -> Result<String, TGLError> {
         let mut final_hex = String::new();
-        for (_y_pos, row) in self.data.outer_iter().enumerate() {
-            for (_x_pos, item) in row.iter().enumerate() {
+        for row in self.data.outer_iter() {
+            for item in row.iter() {
                 if !item.accessible {
                     final_hex += "80";
                     //break 1;
@@ -43,8 +44,9 @@ impl Map {
                         direction_bit += 8;
                     }
 
-                    let area = item.area.unwrap();
+                    let area = item.area.ok_or(tgl_error("null area"))?;
 
+                    let item_id = item.item_id.clone().ok_or(tgl_error("item was null"));
                     match item.room_type {
                         //0 normal, 1 save, 2 corridor, 3 text, 4 multi_shop, 5 single_shop, 6 miniboss, 7 item drop
                         RoomType::Normal => {
@@ -54,47 +56,34 @@ impl Map {
                                 item.enemy_type,
                                 item.block_set.clone(),
                                 item.chip_tile,
-                            )
+                            )?
                         }
-                        RoomType::Save => final_hex += &self.save_room_hex(direction_bit, area),
+                        RoomType::Save => final_hex += &self.save_room_hex(direction_bit, area)?,
                         RoomType::Corridor => {
-                            final_hex += &self.corridor_hex(direction_bit, area, item.enemy_type)
+                            final_hex += &self.corridor_hex(direction_bit, area, item.enemy_type)?
                         }
                         RoomType::Text => {
-                            final_hex +=
-                                &self.text_hex(direction_bit, area, item.item_id.clone().unwrap())
+                            final_hex += &self.text_hex(direction_bit, area, item_id?)?
                         }
                         RoomType::MultiShop => {
-                            final_hex += &self.shop_hex(
-                                direction_bit,
-                                area,
-                                item.item_id.clone().unwrap(),
-                                true,
-                            )
+                            final_hex += &self.shop_hex(direction_bit, area, item_id?, true)?
                         }
                         RoomType::SingleShop => {
-                            final_hex += &self.shop_hex(
-                                direction_bit,
-                                area,
-                                item.item_id.clone().unwrap(),
-                                false,
-                            )
+                            final_hex += &self.shop_hex(direction_bit, area, item_id?, false)?
                         }
                         RoomType::Miniboss => {
-                            final_hex += &self.mini_boss_hex(
-                                direction_bit,
-                                area,
-                                item.item_id.clone().unwrap(),
-                            )
+                            final_hex += &self.mini_boss_hex(direction_bit, area, item_id?)?
                         }
                         RoomType::Item => {
                             final_hex += &self.item_room_hex(
                                 direction_bit,
                                 area,
                                 item.enemy_type,
-                                item.block_set.clone().unwrap(),
-                                item.item_id.clone().unwrap(),
-                            )
+                                item.block_set
+                                    .clone()
+                                    .ok_or(tgl_error("blockset was null"))?,
+                                item_id?,
+                            )?
                         }
                     }
                 }
@@ -103,7 +92,7 @@ impl Map {
         if log {
             println!("{}", final_hex.to_uppercase());
         }
-        final_hex
+        Ok(final_hex)
     }
 
     fn item_room_hex(
@@ -113,22 +102,22 @@ impl Map {
         enemy_type: i32,
         block_type: String,
         item_id: String,
-    ) -> String {
+    ) -> Result<String, TGLError> {
         //give me a normal empty room
         let mut required_key =
-            self.get_key_from_area_for_rooms_that_could_have_enemies_but_dont(area);
+            self.get_key_from_area_for_rooms_that_could_have_enemies_but_dont(area)?;
         let meaningless_byte = 0;
 
         let mut length = 5;
         let mut enemy_string = String::new();
         if enemy_type != 0 {
-            required_key = self.get_key_from_area_for_most_rooms(area);
+            required_key = self.get_key_from_area_for_most_rooms(area)?;
 
             length += 1;
             enemy_string = format!("{:02X}", enemy_type);
         }
 
-        format!(
+        Ok(format!(
             "3{:X}{:X}{:X}{:X}{:X}{}{}{}",
             length,
             direction_bit,
@@ -138,7 +127,7 @@ impl Map {
             item_id,
             enemy_string,
             block_type
-        )
+        ))
     }
 
     fn normal_room_hex(
@@ -148,17 +137,17 @@ impl Map {
         enemy_type: i32,
         block_type: Option<String>,
         chip_tile: bool,
-    ) -> String {
+    ) -> Result<String, TGLError> {
         //give me a normal empty room
         let mut required_key =
-            self.get_key_from_area_for_rooms_that_could_have_enemies_but_dont(area);
+            self.get_key_from_area_for_rooms_that_could_have_enemies_but_dont(area)?;
 
         let mut room_type = 0;
 
         let mut length = 2;
         let mut enemy_string = String::new();
         if enemy_type != 0 {
-            required_key = self.get_key_from_area_for_most_rooms(area);
+            required_key = self.get_key_from_area_for_most_rooms(area)?;
 
             length += 1;
             enemy_string = format!("{:02X}", enemy_type);
@@ -187,32 +176,45 @@ impl Map {
             room_type, length, direction_bit, required_key, area, enemy_string, block_string
         );
         //println!("{} {} {} {} {} {} {} {}", room_type, length, direction_bit, required_key, meaningless_byte, area, enemy_string, block_string);
-        value
+        Ok(value)
     }
 
-    fn mini_boss_hex(&self, direction_bit: i32, area: i32, item_id: String) -> String {
-        let required_key = self.get_key_from_area_for_most_rooms(area);
+    fn mini_boss_hex(
+        &self,
+        direction_bit: i32,
+        area: i32,
+        item_id: String,
+    ) -> Result<String, TGLError> {
+        let required_key = self.get_key_from_area_for_most_rooms(area)?;
 
-        format!(
+        Ok(format!(
             "43{:X}{:X}1{:X}{}",
             direction_bit, required_key, area, item_id
-        )
+        ))
     }
 
-    fn save_room_hex(&self, direction_bit: i32, area: i32) -> String {
-        let required_key = self.get_key_from_area_for_most_rooms(area);
+    fn save_room_hex(&self, direction_bit: i32, area: i32) -> Result<String, TGLError> {
+        let required_key = self.get_key_from_area_for_most_rooms(area)?;
 
-        format!("82{:X}{:X}01", direction_bit, required_key)
+        Ok(format!("82{:X}{:X}01", direction_bit, required_key))
     }
 
-    fn corridor_hex(&self, direction_bit: i32, area: i32, corridor: i32) -> String {
-        let mut required_key = self.get_key_from_area_for_most_rooms(area);
+    fn corridor_hex(
+        &self,
+        direction_bit: i32,
+        area: i32,
+        corridor: i32,
+    ) -> Result<String, TGLError> {
+        let mut required_key = self.get_key_from_area_for_most_rooms(area)?;
         if corridor == 1 {
             required_key = 0;
         }
 
         let corridor_id = format!("{:02X}", 128 + corridor);
-        format!("82{:X}{:X}{}", direction_bit, required_key, corridor_id)
+        Ok(format!(
+            "82{:X}{:X}{}",
+            direction_bit, required_key, corridor_id
+        ))
     }
 
     fn shop_hex(
@@ -221,49 +223,52 @@ impl Map {
         area: i32,
         shop_id: String,
         is_multi_shop: bool,
-    ) -> String {
-        let required_key = self.get_key_from_area_for_rooms_that_could_have_enemies_but_dont(area);
+    ) -> Result<String, TGLError> {
+        let required_key =
+            self.get_key_from_area_for_rooms_that_could_have_enemies_but_dont(area)?;
         let meaningless_byte = 0;
 
         if is_multi_shop {
-            format!(
+            Ok(format!(
                 "A3{:X}{:X}{:X}2{}",
                 direction_bit, required_key, meaningless_byte, shop_id
-            )
+            ))
         } else {
-            format!(
+            Ok(format!(
                 "A3{:X}{:X}{:X}6{}",
                 direction_bit, required_key, meaningless_byte, shop_id
-            )
+            ))
         }
     }
 
-    fn text_hex(&self, direction_bit: i32, area: i32, text_id: String) -> String {
-        let required_key = self.get_key_from_area_for_rooms_that_could_have_enemies_but_dont(area);
+    fn text_hex(&self, direction_bit: i32, area: i32, text_id: String) -> Result<String, TGLError> {
+        let required_key =
+            self.get_key_from_area_for_rooms_that_could_have_enemies_but_dont(area)?;
         let meaningless_byte = 0;
-        format!(
+        Ok(format!(
             "A3{:X}{:X}{:X}3{}",
             direction_bit, required_key, meaningless_byte, text_id
-        )
+        ))
     }
 
-    fn get_key_from_area_for_most_rooms(&self, area: i32) -> i32 {
-        self.get_key_from_area_for_rooms_that_could_have_enemies_but_dont(area) + 8
+    fn get_key_from_area_for_most_rooms(&self, area: i32) -> Result<i32, TGLError> {
+        Ok(self.get_key_from_area_for_rooms_that_could_have_enemies_but_dont(area)? + 8)
     }
 
-    fn get_key_from_area_for_rooms_that_could_have_enemies_but_dont(&self, area: i32) -> i32 {
+    fn get_key_from_area_for_rooms_that_could_have_enemies_but_dont(
+        &self,
+        area: i32,
+    ) -> Result<i32, TGLError> {
         match area {
-            0 => 0,
-            1 | 2 => 1,
-            3 => 2,
-            4 => 3,
-            5 | 6 => 4,
-            7 | 8 => 5,
-            9 => 6,
-            10 => 7,
-            _ => {
-                panic!("invalid area");
-            }
+            0 => Ok(0),
+            1 | 2 => Ok(1),
+            3 => Ok(2),
+            4 => Ok(3),
+            5 | 6 => Ok(4),
+            7 | 8 => Ok(5),
+            9 => Ok(6),
+            10 => Ok(7),
+            _ => Err("invalid area".into()),
         }
     }
 
@@ -287,7 +292,7 @@ impl Map {
         }
     }
 
-    pub fn draw_exits(&self) {
+    pub fn draw_exits(&self) -> Result<(), TGLError> {
         for row in self.data.rows() {
             for i in 1..=3 {
                 for item in row.iter() {
@@ -328,19 +333,39 @@ impl Map {
                                 RoomType::MultiShop => {
                                     print!(
                                         "S{}",
-                                        hex::decode(item.item_id.clone().unwrap()).unwrap()[0]
+                                        hex::decode(
+                                            item.item_id
+                                                .clone()
+                                                .ok_or(tgl_error("item_id empty in draw_exits"))?
+                                        )?[0]
                                             - 0x3F
                                     )
                                 }
                                 RoomType::SingleShop => {
                                     print!(
                                         "s{}",
-                                        hex::decode(item.item_id.clone().unwrap()).unwrap()[0]
+                                        hex::decode(
+                                            item.item_id
+                                                .clone()
+                                                .ok_or(tgl_error("item_id empty in draw_exits"))?
+                                        )?[0]
                                             - 0x3A
                                     )
                                 }
-                                RoomType::Miniboss => print!("{}", &item.item_id.clone().unwrap()),
-                                RoomType::Item => print!("{}", &item.item_id.clone().unwrap()),
+                                RoomType::Miniboss => print!(
+                                    "{}",
+                                    &item
+                                        .item_id
+                                        .clone()
+                                        .ok_or(tgl_error("item_id empty in draw_exits"))?
+                                ),
+                                RoomType::Item => print!(
+                                    "{}",
+                                    &item
+                                        .item_id
+                                        .clone()
+                                        .ok_or(tgl_error("item_id empty in draw_exits"))?
+                                ),
                                 RoomType::Normal => print!("░░"),
                             }
                         } else {
@@ -365,5 +390,6 @@ impl Map {
                 println!();
             }
         }
+        Ok(())
     }
 }

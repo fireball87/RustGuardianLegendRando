@@ -1,4 +1,5 @@
 use crate::patcher::Patcher;
+use crate::tgl_error::TGLError;
 use rand::seq::SliceRandom;
 use rand_chacha::ChaCha8Rng;
 
@@ -127,17 +128,18 @@ fn get_sky_data() -> Vec<CorridorSkyData> {
     ]
 }
 
-fn parse_c2_length(length: &mut usize, input: &str) {
+fn parse_c2_length(length: &mut usize, input: &str) -> Result<(), TGLError> {
     let first = &input[*length..*length + 2];
-    if 128 & u8::from_str_radix(first, 16).unwrap() != 0 {
+    if 128 & u8::from_str_radix(first, 16)? != 0 {
         *length += 6;
-        parse_c2_length(length, input);
+        parse_c2_length(length, input)?;
     } else {
         *length += 2;
     }
+    Ok(())
 }
 
-pub fn shuffle_skies(patcher: &mut Patcher, rng: &mut ChaCha8Rng) {
+pub fn shuffle_skies(patcher: &mut Patcher, rng: &mut ChaCha8Rng) -> Result<(), TGLError> {
     let input_data = get_sky_data();
 
     for corridor in input_data {
@@ -152,15 +154,15 @@ pub fn shuffle_skies(patcher: &mut Patcher, rng: &mut ChaCha8Rng) {
             if first == "02" {
                 break;
             }
-            if 128 & u8::from_str_radix(first, 16).unwrap() != 0 {
+            if 128 & u8::from_str_radix(first, 16)? != 0 {
                 length += 6;
             } else {
                 length += 2;
             }
-            parse_c2_length(&mut length, input);
+            parse_c2_length(&mut length, input)?;
             split.push(input[0..length].to_string());
             if first == "01" {
-                panic!("Hit a loop point");
+                return Err("Hit a loop point".into());
             }
             input = &input[length..];
         }
@@ -168,4 +170,5 @@ pub fn shuffle_skies(patcher: &mut Patcher, rng: &mut ChaCha8Rng) {
         let patchstring = split.join("");
         patcher.add_change(&patchstring, corridor.address);
     }
+    Ok(())
 }

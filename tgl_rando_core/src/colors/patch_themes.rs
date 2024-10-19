@@ -2,6 +2,7 @@ use crate::colors::patch_themes::ColorTheory::{Complementary, Monochrome, Triad}
 use crate::config::ColorStrategy::Vanilla;
 use crate::config::{ColorStrategy, Config, HueOptions};
 use crate::patcher::Patcher;
+use crate::tgl_error::{tgl_error, TGLError};
 use crate::SaturationOptions;
 use rand::Rng;
 use rand_chacha::ChaCha8Rng;
@@ -31,10 +32,14 @@ struct PatchSet {
     patches: Vec<Patch>,
     saturation_flip_safe: bool,
 }
-pub fn patch_all(cfg: &Config, patcher: &mut Patcher, rng: &mut ChaCha8Rng) {
+pub fn patch_all(
+    cfg: &Config,
+    patcher: &mut Patcher,
+    rng: &mut ChaCha8Rng,
+) -> Result<(), TGLError> {
     if let Vanilla(hue) = &cfg.color_options.color_strategy {
         if !hue.rotate_hue && hue.flip_saturation == SaturationOptions::None {
-            return;
+            return Ok(());
         }
     }
     move_a5_floor_color_to_volcano(patcher);
@@ -60,8 +65,9 @@ pub fn patch_all(cfg: &Config, patcher: &mut Patcher, rng: &mut ChaCha8Rng) {
     };
 
     for area in areas {
-        pick_level(area.0, area.1, rng, patcher, cfg)
+        pick_level(area.0, area.1, rng, patcher, cfg)?
     }
+    Ok(())
 }
 
 fn pick_level(
@@ -70,18 +76,18 @@ fn pick_level(
     rng: &mut ChaCha8Rng,
     patcher: &mut Patcher,
     cfg: &Config,
-) {
+) -> Result<(), TGLError> {
     let strategy = &cfg.color_options.color_strategy;
     match strategy {
         ColorStrategy::Vanilla(hue) => {
             let index = 0;
             let selected = &area[index];
-            patch_single_area(level, patcher, rng, selected, hue, cfg);
+            patch_single_area(level, patcher, rng, selected, hue, cfg)?;
         }
         ColorStrategy::All(hue) => {
             let index = rng.gen_range(0..area.len());
             let selected = &area[index];
-            patch_single_area(level, patcher, rng, selected, hue, cfg);
+            patch_single_area(level, patcher, rng, selected, hue, cfg)?;
         }
         ColorStrategy::Random => {
             let index = 0;
@@ -101,9 +107,10 @@ fn pick_level(
                 .collect();
             let index = rng.gen_range(0..filtered.len());
             let selected = filtered[index];
-            patch_single_area(level, patcher, rng, selected, hue, cfg);
+            patch_single_area(level, patcher, rng, selected, hue, cfg)?;
         }
     }
+    Ok(())
 }
 
 fn patch_single_area(
@@ -113,7 +120,7 @@ fn patch_single_area(
     selected: &PatchSet,
     hue_options: &HueOptions,
     cfg: &Config,
-) {
+) -> Result<(), TGLError> {
     let flip = rng.gen_range(0..=1);
     let shift_distance = rng.gen_range(0..=11);
     let flip_allowed;
@@ -137,11 +144,10 @@ fn patch_single_area(
         should_flip = true;
     }
 
-    let colorshift;
-    match hue_options.rotate_hue {
-        true => colorshift = format!("{}", shift_distance),
-        false => colorshift = "false".to_string(),
-    }
+    let colorshift = match hue_options.rotate_hue {
+        true => format!("{}", shift_distance),
+        false => "false".to_string(),
+    };
 
     if cfg.log {
         println!(
@@ -154,33 +160,39 @@ fn patch_single_area(
         let mut shifted;
         match hue_options.rotate_hue {
             true => {
-                shifted = shift_all_colors(values.hex_code, shift_distance);
+                shifted = shift_all_colors(values.hex_code, shift_distance)?;
             }
             false => shifted = values.hex_code.to_string(),
         }
 
         if should_flip {
-            shifted = flip_all_saturation(&shifted);
+            shifted = flip_all_saturation(&shifted)?;
         }
 
         patcher.add_change(&shifted, values.address);
     }
+    Ok(())
 }
 
-fn flip_all_saturation(colors: &str) -> String {
-    let v1 = flip_single_saturation(&colors[..2]);
-    let v2 = flip_single_saturation(&colors[2..4]);
-    let v3 = flip_single_saturation(&colors[4..]);
+fn flip_all_saturation(colors: &str) -> Result<String, TGLError> {
+    let v1 = flip_single_saturation(&colors[..2])?;
+    let v2 = flip_single_saturation(&colors[2..4])?;
+    let v3 = flip_single_saturation(&colors[4..])?;
 
-    format!("{}{}{}", v1, v2, v3)
+    Ok(format!("{}{}{}", v1, v2, v3))
 }
-fn flip_single_saturation(color: &str) -> String {
+fn flip_single_saturation(color: &str) -> Result<String, TGLError> {
     let mut chars = color.chars();
-    let c1 = &chars.next().unwrap();
-    let c2 = &chars.next().unwrap();
+    let c1 = &chars
+        .next()
+        .ok_or(tgl_error("char c1 not found in color string"))?;
+    let c2 = &chars
+        .next()
+        .ok_or(tgl_error("char c2 not found in color string"))?;
     let saturation = ['0', '1', '2', '3'];
     let hue = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C'];
-    if saturation.contains(c1) && hue.contains(c2) {
+
+    Ok(if saturation.contains(c1) && hue.contains(c2) {
         match c1 {
             '0' => format!("{}{}", '3', c2),
             '1' => format!("{}{}", '2', c2),
@@ -192,28 +204,35 @@ fn flip_single_saturation(color: &str) -> String {
         {
             color.to_string()
         }
-    }
+    })
 }
-fn shift_all_colors(colors: &str, distance: usize) -> String {
-    let v1 = shift_single_color_hue(&colors[..2], distance);
-    let v2 = shift_single_color_hue(&colors[2..4], distance);
-    let v3 = shift_single_color_hue(&colors[4..], distance);
+fn shift_all_colors(colors: &str, distance: usize) -> Result<String, TGLError> {
+    let v1 = shift_single_color_hue(&colors[..2], distance)?;
+    let v2 = shift_single_color_hue(&colors[2..4], distance)?;
+    let v3 = shift_single_color_hue(&colors[4..], distance)?;
 
-    format!("{}{}{}", v1, v2, v3)
+    Ok(format!("{}{}{}", v1, v2, v3))
 }
-fn shift_single_color_hue(color: &str, distance: usize) -> String {
+fn shift_single_color_hue(color: &str, distance: usize) -> Result<String, TGLError> {
     let mut chars = color.chars();
-    let c1 = &chars.next().unwrap();
-    let c2 = &chars.next().unwrap();
+    let c1 = &chars
+        .next()
+        .ok_or(tgl_error("char c1 not found in color string"))?;
+    let c2 = &chars
+        .next()
+        .ok_or(tgl_error("char c2 not found in color string"))?;
     let saturation = ['0', '1', '2', '3'];
     let hue = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C'];
     if saturation.contains(c1) && hue.contains(c2) {
-        let index = hue.iter().position(|&c| c == *c2).unwrap();
+        let index = hue
+            .iter()
+            .position(|&c| c == *c2)
+            .ok_or(tgl_error("hue color shift has error in position iterator"))?;
         let new_index = (index + distance) % hue.len();
 
-        format!("{}{}", c1, hue[new_index])
+        Ok(format!("{}{}", c1, hue[new_index]))
     } else {
-        color.to_string()
+        Ok(color.to_string())
     }
 }
 

@@ -7,4 +7,4 @@ edition = "2021"
 getrandom = { version = "0.2.15", features = ["js"] }
 tgl_rando_core = { path = "../tgl_rando_core" }
 #chrono = "0.4.38"
-hex = { version = "0.4.3", features = [] }
+hex = { version = "0.4.3", features = ["std"] }

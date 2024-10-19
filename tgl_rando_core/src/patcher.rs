@@ -1,3 +1,5 @@
+use crate::tgl_error::TGLError;
+
 pub struct Change {
     hex: String,
     offset: String,
@@ -40,34 +42,34 @@ impl Patcher {
         self.changes.push(change);
     }
 
-    pub fn build_ips(&self) -> Vec<u8> {
+    pub fn build_ips(&self) -> Result<Vec<u8>, TGLError> {
         let mut byte_array: Vec<u8> = Vec::new();
-        byte_array.extend_from_slice(&hex::decode("5041544348").unwrap()); // add header
+        byte_array.extend_from_slice(&hex::decode("5041544348")?); // add header
 
         for change in &self.changes {
             let offset = &change.offset;
 
-            let offset_bytes = hex::decode(crate::helpers::pad_hex(offset, 6)).unwrap();
+            let offset_bytes = hex::decode(crate::helpers::pad_hex(offset, 6))?;
             byte_array.extend_from_slice(&offset_bytes);
 
             let change_hex = &change.hex;
-            let change_bytes = hex::decode(change_hex).unwrap();
+            let change_bytes = hex::decode(change_hex)?;
             let length = (change_bytes.len()) as u16;
             let length_bytes = length.to_be_bytes();
             byte_array.extend_from_slice(&length_bytes);
             byte_array.extend_from_slice(&change_bytes);
         }
 
-        byte_array.extend_from_slice(&hex::decode("454f46").unwrap()); // add end of file
+        byte_array.extend_from_slice(&hex::decode("454f46")?); // add end of file
 
-        byte_array
+        Ok(byte_array)
     }
 
-    pub fn write_rom(&self, filename: &str, source_data: &str) {
+    pub fn write_rom(&self, filename: &str, source_data: &str) -> Result<(), TGLError> {
         let mut patched = source_data.to_owned();
 
         for change in &self.changes {
-            let offset = u32::from_str_radix(&change.offset, 16).unwrap() * 2;
+            let offset = u32::from_str_radix(&change.offset, 16)? * 2;
             let change_hex = &change.hex;
             patched.replace_range(
                 offset as usize
@@ -76,19 +78,20 @@ impl Patcher {
             );
         }
 
-        std::fs::write(filename, hex::decode(patched).unwrap()).expect("Unable to write file");
+        std::fs::write(filename, hex::decode(patched)?).expect("Unable to write file");
+        Ok(())
     }
 
-    pub fn patch_u8_vec(&self, source_data: &Vec<u8>) -> Vec<u8> {
-        let mut patched = source_data.clone();
+    pub fn patch_u8_vec(&self, source_data: &[u8]) -> Result<Vec<u8>, TGLError> {
+        let mut patched = source_data.to_owned();
 
         for change in &self.changes {
-            let offset = usize::from_str_radix(&change.offset, 16).unwrap();
-            let change_bytes = hex::decode(&change.hex).unwrap();
+            let offset = usize::from_str_radix(&change.offset, 16)?;
+            let change_bytes = hex::decode(&change.hex)?;
             let end = offset + change_bytes.len();
             patched.splice(offset..end, change_bytes.iter().cloned());
         }
-        patched
+        Ok(patched)
     }
 }
 
@@ -113,7 +116,7 @@ mod tests {
         let mut pat = Patcher::new();
         pat.add_change("0f", "18bbd");
         pat.add_change("0f", "894c");
-        let export = pat.build_ips();
+        let export = pat.build_ips().unwrap();
         assert_eq!(
             hex::encode(export),
             "5041544348018bbd00010f00894c00010f454f46"

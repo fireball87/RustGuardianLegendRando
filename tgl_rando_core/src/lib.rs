@@ -8,44 +8,42 @@ pub mod patcher;
 mod qol_hacks;
 mod rebalance;
 pub mod seed;
+pub mod tgl_error;
 
 use rand_chacha::ChaCha8Rng;
 use rand_seeder::Seeder;
 
 use crate::config::{Config, SaturationOptions};
 use crate::patcher::Patcher;
+use crate::tgl_error::TGLError;
 
-pub fn generate(patcher: &mut Patcher, cfg: &Config) {
+pub fn generate(patcher: &mut Patcher, cfg: &Config) -> Result<(), TGLError> {
     let mut rng: ChaCha8Rng = Seeder::from(&cfg.seed).make_rng();
-    corridor::shuffle_corridor_components(patcher, cfg, &mut rng);
+    corridor::shuffle_corridor_components(patcher, cfg, &mut rng)?;
     rebalance::handle_rebalance(patcher, cfg, &mut rng);
     if cfg.boss_config.shuffle_bosses {
         maze::shuffle_minibosses::shuffle_minibosses(patcher, cfg, &mut rng);
     }
-    let items = maze::items::item_generator::ItemGenerator::prepare_items(
-        patcher, 5, 5, 4, 9, 10, 6, true, 5, 5, 3, 5, cfg.log, &mut rng,
-    );
+    let item_library =
+        maze::items::item_generator::ItemGenerator::prepare_items(patcher, cfg, &mut rng);
 
-    let map = maze::generator::Generator.run(
-        items.0, items.1, items.2, 18, 25, 3, 0, false, 6, 3, 10, cfg.log, &mut rng,
-    );
+    let map = maze::generator::Generator.run(&item_library?, cfg, &mut rng);
     match map {
         Ok(map) => {
             if cfg.log {
-                map.draw_exits();
+                map.draw_exits()?;
             }
-            let maphex = map.write_hex(cfg.log);
+            let maphex = map.write_hex(cfg.log)?;
             patcher.add_change(&maphex, "14A7E");
         }
-        Err(e) => {
-            panic!("{}", e);
-        }
+        Err(e) => return Err(e),
     }
 
-    colors::patch_themes::patch_all(cfg, patcher, &mut Seeder::from(&cfg.seed).make_rng());
+    colors::patch_themes::patch_all(cfg, patcher, &mut Seeder::from(&cfg.seed).make_rng())?;
 
     qol_hacks::handle_qol_hacks(patcher, cfg);
     seed::write_seed(patcher, cfg);
+    Ok(())
 }
 
 #[cfg(test)]
@@ -61,15 +59,15 @@ mod tests {
 
         let mut p1 = Patcher::new();
 
-        generate(&mut p1, &cfg);
+        generate(&mut p1, &cfg).unwrap();
 
-        let ips1 = p1.build_ips();
+        let ips1 = p1.build_ips().unwrap();
 
         let mut p2 = Patcher::new();
 
-        generate(&mut p2, &cfg);
+        generate(&mut p2, &cfg).unwrap();
 
-        let ips2 = p2.build_ips();
+        let ips2 = p2.build_ips().unwrap();
         assert_eq!(ips1, ips2);
     }
 

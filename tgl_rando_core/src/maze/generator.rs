@@ -127,7 +127,7 @@ impl Generator {
             let area = item.area.ok_or(tgl_error("empty area"))?;
 
             //for item in row {
-            if (area >= 1) && (area <= 10) {
+            if (1..=10).contains(&area) {
                 item.area = Some(newareas[area as usize - 1]);
             }
             //}

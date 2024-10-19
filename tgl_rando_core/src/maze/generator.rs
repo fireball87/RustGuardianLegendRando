@@ -820,19 +820,14 @@ impl Generator {
         Ok(())
     }
 
-    fn populate_enemies(&self, map: &mut Map, empty_room_odds: u8, rng: &mut ChaCha8Rng) {
+    fn populate_enemies(&self, map: &mut Map, empty_room_odds: f64, rng: &mut ChaCha8Rng) {
         for y_pos in 0..24 {
             for x_pos in 0..24 {
                 if map.data[[y_pos, x_pos]].accessible
                     && (map.data[[y_pos, x_pos]].room_type == RoomType::Normal)
+                    && empty_room_odds > rng.gen_range(0.0..1.0)
                 {
-                    if empty_room_odds > 0 {
-                        if rng.gen_range(1..=empty_room_odds) != 1 {
-                            map.data[[y_pos, x_pos]].enemy_type = rng.gen_range(1..=47);
-                        }
-                    } else {
-                        map.data[[y_pos, x_pos]].enemy_type = rng.gen_range(1..=47);
-                    }
+                    map.data[[y_pos, x_pos]].enemy_type = rng.gen_range(1..=47);
                 }
             }
         }
@@ -1043,8 +1038,8 @@ impl Generator {
     fn place_random_decorations(
         &self,
         map: &mut Map,
-        decoration_odds: u8,
-        chip_odds: u8,
+        decoration_odds: f64,
+        chip_odds: f64,
         rng: &mut ChaCha8Rng,
     ) -> Result<(), TGLError> {
         for y_pos in 0..24 {
@@ -1056,20 +1051,12 @@ impl Generator {
                     let mut decorate = false;
                     let mut usechips = false;
 
-                    if decoration_odds > 0 {
-                        if rng.gen_range(1..=decoration_odds) == 1 {
-                            decorate = true;
-                        }
-                    } else {
+                    if decoration_odds > rng.gen_range(0.0..1.0) {
                         decorate = true;
                     }
 
                     if decorate {
-                        if chip_odds > 0 {
-                            if rng.gen_range(1..=chip_odds) == 1 {
-                                usechips = true;
-                            }
-                        } else {
+                        if chip_odds > rng.gen_range(0.0..1.0) {
                             usechips = true;
                         }
 

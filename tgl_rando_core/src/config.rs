@@ -99,16 +99,16 @@ impl Default for BossConfig {
     }
 }
 
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub struct MapConfig {
     pub min_area_size: usize,
     pub max_area_size: usize,
     pub desired_connections: i32,
     pub desired_one_way_connections: i32,
     pub portal_only_one_ways: bool,
-    pub decoration_odds: u8, // one out of ever decoration_odds rooms
-    pub chip_odds: u8,       // one out of every chip_odds rooms
-    pub empty_room_odds: u8, // one out of every empty_room_odds rooms
+    pub decoration_odds: f64, // from 0 to 1 as a percent
+    pub chip_odds: f64,       // from 0 to 1 as a percent
+    pub empty_room_odds: f64, // from 0 to 1 as a percent
     pub multi_shops: usize,
     pub single_shops: usize,
 }
@@ -121,9 +121,9 @@ impl Default for MapConfig {
             desired_connections: 3,
             desired_one_way_connections: 0,
             portal_only_one_ways: false,
-            decoration_odds: 6,
-            chip_odds: 3,
-            empty_room_odds: 10,
+            decoration_odds: 0.17,
+            chip_odds: 0.3,
+            empty_room_odds: 0.1,
             multi_shops: 5,
             single_shops: 5,
         }
@@ -159,7 +159,7 @@ impl Default for ItemConfig {
     }
 }
 
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Clone)]
 pub struct Config {
     pub corridor_config: CorridorConfig,
     pub map_config: MapConfig,

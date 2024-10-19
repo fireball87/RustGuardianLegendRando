@@ -28,6 +28,11 @@ fn app() -> Element {
     let qol_cfg = use_signal(QOLHacks::default);
     let color_cfg = use_signal(ColorOptions::default);
     let hue_cfg = use_signal(HueOptions::default);
+
+    let mut advanced_visible = use_signal(|| false);
+    let map_cfg = use_signal(MapConfig::default);
+    let item_cfg = use_signal(ItemConfig::default);
+
     let mut err_string = use_signal(String::new);
 
     rsx! {
@@ -36,6 +41,24 @@ fn app() -> Element {
             boss_config { c: boss_cfg }
             qol_hacks { c: qol_cfg }
             color_config { c: color_cfg, h: hue_cfg }
+
+            h3 { "Advanced options." }
+            input {
+                r#type: "checkbox",
+                checked: advanced_visible(),
+                id: "advanced_options",
+                oninput: move |event| { advanced_visible.set(event.value().parse().unwrap_or(false)) }
+            }
+            label { "for": "advanced_options",
+                "Show Advanced Options, not checked for sanity so may produce errors or perhaps broken roms."
+            }
+            br {}
+
+            if advanced_visible() {
+                map_config { c: map_cfg }
+                item_config { c: item_cfg }
+            }
+
             h3 { "Generate" }
 
             if !err_string().is_empty() {
@@ -80,8 +103,8 @@ fn app() -> Element {
                         &(uploaded.read()),
                         Config {
                             corridor_config: corridor_cfg(),
-                            map_config: MapConfig::default(),
-                            item_config: ItemConfig::default(),
+                            map_config: map_cfg(),
+                            item_config: item_cfg(),
                             qol_hacks: qol_cfg(),
                             color_options: ColorOptions {
                                 color_strategy: colors,
@@ -417,6 +440,311 @@ fn hue_config(c: Signal<ColorOptions>, h: Signal<HueOptions>) -> Element {
         }
         label { "for": "theme", "Saturation Flip Mode" }
         br {}
+    }
+}
+
+// weapon_size: 4,
+// blue: 9,
+// red: 10,
+// shield: 6,
+// force_shields: true,
+// guns: 5,
+// rapid_fires: 5,
+// etanks: 3,
+// enemy_erasers: 5,
+#[component]
+fn item_config(c: Signal<ItemConfig>) -> Element {
+    rsx! {
+        div {
+            h3 { "Item Config" }
+            input {
+                r#type: "range",
+                min: 0,
+                max: 6,
+                value: c().weapon_size as i64,
+                oninput: move |event| {
+                    c.set(ItemConfig {
+                        weapon_size: event.value().parse().unwrap_or(c().weapon_size),
+                        ..c()
+                    })
+                },
+                id: "weapon_size"
+            }
+            label { "for": "weapon_size", "{c().weapon_size} - Forced copies of each weapon" }
+            br {}
+
+            input {
+                r#type: "range",
+                min: 0,
+                max: 20,
+                value: c().blue as i64,
+                oninput: move |event| {
+                    c.set(ItemConfig {
+                        blue: event.value().parse().unwrap_or(c().blue),
+                        ..c()
+                    })
+                },
+                id: "blue"
+            }
+            label { "for": "blue", "{c().blue} - Blue Landers" }
+            br {}
+
+            input {
+                r#type: "range",
+                min: 0,
+                max: 20,
+                value: c().red as i64,
+                oninput: move |event| {
+                    c.set(ItemConfig {
+                        red: event.value().parse().unwrap_or(c().red),
+                        ..c()
+                    })
+                },
+                id: "red"
+            }
+            label { "for": "red", "{c().red} - Red Landers" }
+            br {}
+
+            input {
+                r#type: "range",
+                min: 0,
+                max: 20,
+                value: c().shield as i64,
+                oninput: move |event| {
+                    c.set(ItemConfig {
+                        shield: event.value().parse().unwrap_or(c().shield),
+                        ..c()
+                    })
+                },
+                id: "shield"
+            }
+            label { "for": "shield", "{c().shield} - Shields" }
+            br {}
+
+            input {
+                r#type: "checkbox",
+                checked: c().force_shields,
+                id: "force_shields",
+                oninput: move |event| {
+                    c.set(ItemConfig {
+                        force_shields: event.value().parse().unwrap_or(false),
+                        ..c()
+                    })
+                }
+            }
+            label { "for": "force_shields", "Force distribute 1 shield to every other area." }
+            br {}
+
+            input {
+                r#type: "range",
+                min: 0,
+                max: 20,
+                value: c().guns as i64,
+                oninput: move |event| {
+                    c.set(ItemConfig {
+                        guns: event.value().parse().unwrap_or(c().guns),
+                        ..c()
+                    })
+                },
+                id: "guns"
+            }
+            label { "for": "guns", "{c().guns} - Gun Powerups" }
+            br {}
+
+            input {
+                r#type: "range",
+                min: 0,
+                max: 20,
+                value: c().rapid_fires as i64,
+                oninput: move |event| {
+                    c.set(ItemConfig {
+                        rapid_fires: event.value().parse().unwrap_or(c().rapid_fires),
+                        ..c()
+                    })
+                },
+                id: "rapid_fires"
+            }
+            label { "for": "rapid_fires", "{c().rapid_fires} - Rapid Fires" }
+
+            br {}
+            input {
+                r#type: "range",
+                min: 0,
+                max: 20,
+                value: c().etanks as i64,
+                oninput: move |event| {
+                    c.set(ItemConfig {
+                        etanks: event.value().parse().unwrap_or(c().etanks),
+                        ..c()
+                    })
+                },
+                id: "etanks"
+            }
+            label { "for": "etanks", "{c().etanks} - Energy Tanks" }
+            br {}
+
+            input {
+                r#type: "range",
+                min: 0,
+                max: 20,
+                value: c().enemy_erasers as i64,
+                oninput: move |event| {
+                    c.set(ItemConfig {
+                        enemy_erasers: event.value().parse().unwrap_or(c().enemy_erasers),
+                        ..c()
+                    })
+                },
+                id: "enemy_erasers"
+            }
+            label { "for": "enemy_erasers", "{c().enemy_erasers} - Enemy Erasers" }
+            br {}
+        }
+    }
+}
+
+//currently excluded are the two shop sizes
+#[component]
+fn map_config(c: Signal<MapConfig>) -> Element {
+    rsx! {
+        div {
+            h3 { "Labyrinth Config" }
+            input {
+                r#type: "range",
+                min: 10,
+                max: c().max_area_size as i64,
+                value: c().min_area_size as i64,
+                oninput: move |event| {
+                    c.set(MapConfig {
+                        min_area_size: event.value().parse().unwrap_or(c().min_area_size),
+                        ..c()
+                    })
+                },
+                id: "min_area_size"
+            }
+            label { "for": "min_area_size", "{c().min_area_size} - Minimum Area Size" }
+            br {}
+
+            input {
+                r#type: "range",
+                min: c().min_area_size as i64,
+                max: 30,
+                value: c().max_area_size as i64,
+                oninput: move |event| {
+                    c.set(MapConfig {
+                        max_area_size: event.value().parse().unwrap_or(c().max_area_size),
+                        ..c()
+                    })
+                },
+                id: "max_area_size"
+            }
+            label { "for": "max_area_size", "{c().max_area_size} - Maximum Area Size" }
+            br {}
+
+            input {
+                r#type: "range",
+                min: 0,
+                max: 10,
+                value: c().desired_connections as i64,
+                oninput: move |event| {
+                    c.set(MapConfig {
+                        desired_connections: event
+                            .value()
+                            .parse()
+                            .unwrap_or(c().desired_connections),
+                        ..c()
+                    })
+                },
+                id: "desired_connections"
+            }
+            label { "for": "desired_connections", "{c().desired_connections} - Desired Connections" }
+            br {}
+
+            input {
+                r#type: "range",
+                min: 0,
+                max: 10,
+                value: c().desired_one_way_connections as i64,
+                oninput: move |event| {
+                    c.set(MapConfig {
+                        desired_one_way_connections: event
+                            .value()
+                            .parse()
+                            .unwrap_or(c().desired_one_way_connections),
+                        ..c()
+                    })
+                },
+                id: "desired_one_way_connections"
+            }
+            label { "for": "desired_one_way_connections",
+                "{c().desired_one_way_connections} - Desired One Way Connections"
+            }
+            br {}
+
+            input {
+                r#type: "checkbox",
+                checked: c().portal_only_one_ways,
+                id: "portal_only_one_ways",
+                oninput: move |event| {
+                    c.set(MapConfig {
+                        portal_only_one_ways: event.value().parse().unwrap_or(false),
+                        ..c()
+                    })
+                }
+            }
+            label { "for": "portal_only_one_ways", "One ways only on portal doors." }
+            br {}
+
+            input {
+                r#type: "range",
+                min: 0,
+                max: 1,
+                step: 0.01,
+                value: c().decoration_odds,
+                oninput: move |event| {
+                    c.set(MapConfig {
+                        decoration_odds: event.value().parse().unwrap_or(c().decoration_odds),
+                        ..c()
+                    })
+                },
+                id: "decoration_odds"
+            }
+            label { "for": "decoration_odds", "{c().decoration_odds * 100.0:1.0}% - Room Decoration Odds" }
+            br {}
+
+            input {
+                r#type: "range",
+                min: 0,
+                max: 1,
+                step: 0.01,
+                value: c().chip_odds,
+                oninput: move |event| {
+                    c.set(MapConfig {
+                        chip_odds: event.value().parse().unwrap_or(c().chip_odds),
+                        ..c()
+                    })
+                },
+                id: "chip_odds"
+            }
+            label { "for": "chip_odds", "{c().chip_odds * 100.0:1.0}% - Room Chip Odds" }
+            br {}
+
+            input {
+                r#type: "range",
+                min: 0,
+                max: 1,
+                step: 0.01,
+                value: c().empty_room_odds,
+                oninput: move |event| {
+                    c.set(MapConfig {
+                        empty_room_odds: event.value().parse().unwrap_or(c().empty_room_odds),
+                        ..c()
+                    })
+                },
+                id: "empty_room_odds"
+            }
+            label { "for": "empty_room_odds", "{c().empty_room_odds * 100.0:1.0}% - Empty Room Odds" }
+            br {}
+        }
     }
 }
 

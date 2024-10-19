@@ -1,4 +1,4 @@
-use crate::corridor::shuffle_bosses::OutputBoss;
+use crate::corridor::shuffle_bosses::BossLists;
 use crate::patcher::Patcher;
 use crate::tgl_error::{tgl_error, TGLError};
 use rand::seq::SliceRandom;
@@ -41,7 +41,7 @@ pub struct Corridor {
 pub fn shuffle_corridor_internals(
     patcher: &mut Patcher,
     shuffle_internals: bool,
-    bosses: &Option<(Vec<OutputBoss>, Vec<OutputBoss>, Option<OutputBoss>)>,
+    bosses: &Option<BossLists>,
     rng: &mut ChaCha8Rng,
 ) -> Result<(), TGLError> {
     //c0
@@ -139,7 +139,7 @@ pub fn shuffle_corridor_internals(
 fn tokenize_corridor(
     input: &str,
     corridor_number: u32,
-    bosses: &Option<(Vec<OutputBoss>, Vec<OutputBoss>, Option<OutputBoss>)>,
+    bosses: &Option<BossLists>,
 ) -> Result<Vec<TokenEntry>, TGLError> {
     let mut bosses_placed = 0;
     let mut last_c7: Option<usize> = None;
@@ -224,7 +224,7 @@ fn tokenize_corridor(
         } else if command == "05" {
             if let Some(bosses) = bosses {
                 if corridor_number == 21 {
-                    if let Some(c21_boss) = &bosses.1.get(bosses_placed) {
+                    if let Some(c21_boss) = &bosses.c21_bosses.get(bosses_placed) {
                         if let Some(last_c7) = last_c7 {
                             let lc7 = &mut return_array[last_c7];
                             lc7.data = Some(format!("{:04X}", c21_boss.pointer));
@@ -236,7 +236,7 @@ fn tokenize_corridor(
                         }
                     }
                 } else if corridor_number == 22 {
-                    if let Some(final_boss) = &bosses.2 {
+                    if let Some(final_boss) = &bosses.final_boss {
                         if let Some(last_c7) = last_c7 {
                             let lc7 = &mut return_array[last_c7];
 
@@ -246,7 +246,9 @@ fn tokenize_corridor(
                         }
                     }
                 } else if corridor_number > 0 && corridor_number < 21 {
-                    if let Some(level_data) = &bosses.0.get((corridor_number - 1) as usize) {
+                    if let Some(level_data) =
+                        &bosses.stage_bosses.get((corridor_number - 1) as usize)
+                    {
                         if let Some(last_c7) = last_c7 {
                             let lc7 = &mut return_array[last_c7];
 

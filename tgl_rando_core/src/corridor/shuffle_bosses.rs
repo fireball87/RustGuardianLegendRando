@@ -18,11 +18,17 @@ pub struct OutputBoss {
     pub id: u32,
     pub pointer: u32,
 }
+
+pub struct BossLists {
+    pub stage_bosses: Vec<OutputBoss>,
+    pub c21_bosses: Vec<OutputBoss>,
+    pub final_boss: Option<OutputBoss>,
+}
 pub fn randomize_bosses(
     patcher: &mut Patcher,
     randomize_final_boss: bool,
     rng: &mut ChaCha8Rng,
-) -> Result<(Vec<OutputBoss>, Vec<OutputBoss>, Option<OutputBoss>), TGLError> {
+) -> Result<BossLists, TGLError> {
     let mut table = vec![
         Boss {
             boss: "eyegore",
@@ -189,5 +195,9 @@ pub fn randomize_bosses(
     for (index, row) in level_bosses.iter().enumerate() {
         println!("corridor boss {} is {:02X}", index + 1, row.id);
     }
-    Ok((level_bosses, c21bosses, final_boss))
+    Ok(BossLists {
+        stage_bosses: level_bosses,
+        c21_bosses: c21bosses,
+        final_boss,
+    })
 }

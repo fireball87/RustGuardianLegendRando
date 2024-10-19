@@ -1,4 +1,4 @@
-use crate::corridor::shuffle_bosses::OutputBoss;
+use crate::corridor::shuffle_bosses::BossLists;
 use crate::patcher::Patcher;
 use crate::tgl_error::{tgl_error, TGLError};
 use rand::seq::SliceRandom;
@@ -7,7 +7,7 @@ use rand_chacha::ChaCha8Rng;
 pub fn shuffle_corridors(
     patcher: &mut Patcher,
     shuffle_corridors: bool,
-    shuffled_bosses: &Option<(Vec<OutputBoss>, Vec<OutputBoss>, Option<OutputBoss>)>,
+    shuffled_bosses: &Option<BossLists>,
     log: bool,
     rng: &mut ChaCha8Rng,
 ) -> Result<(), TGLError> {
@@ -39,14 +39,14 @@ pub fn shuffle_corridors(
     let mut c21_final_id = None;
     if let Some(shuffled_bosses) = shuffled_bosses {
         for (x, row) in table.iter_mut().enumerate() {
-            if let Some(entry) = &shuffled_bosses.0.get(x) {
+            if let Some(entry) = &shuffled_bosses.stage_bosses.get(x) {
                 if entry.id != u32::MAX {
                     row[1] = entry.id;
                 }
             }
         }
 
-        if let Some(c21_final) = &shuffled_bosses.1.last() {
+        if let Some(c21_final) = &shuffled_bosses.c21_bosses.last() {
             let id = c21_final.id;
             c21_final_id = Some(id);
             let boss_str = &format!("{:02X}", id);
@@ -55,7 +55,7 @@ pub fn shuffle_corridors(
             patcher.add_change(boss_str, "d3ac");
         }
 
-        if let Some(final_boss) = &shuffled_bosses.2 {
+        if let Some(final_boss) = &shuffled_bosses.final_boss {
             final_id = Some(final_boss.id);
         }
     }

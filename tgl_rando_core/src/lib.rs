@@ -59,15 +59,15 @@ mod tests {
 
         let mut p1 = Patcher::new();
 
-        generate(&mut p1, &cfg);
+        generate(&mut p1, &cfg).unwrap();
 
-        let ips1 = p1.build_ips();
+        let ips1 = p1.build_ips().unwrap();
 
         let mut p2 = Patcher::new();
 
-        generate(&mut p2, &cfg);
+        generate(&mut p2, &cfg).unwrap();
 
-        let ips2 = p2.build_ips();
+        let ips2 = p2.build_ips().unwrap();
         assert_eq!(ips1, ips2);
     }
 

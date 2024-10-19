@@ -116,7 +116,7 @@ mod tests {
         let mut pat = Patcher::new();
         pat.add_change("0f", "18bbd");
         pat.add_change("0f", "894c");
-        let export = pat.build_ips();
+        let export = pat.build_ips().unwrap();
         assert_eq!(
             hex::encode(export),
             "5041544348018bbd00010f00894c00010f454f46"

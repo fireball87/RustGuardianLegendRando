@@ -44,7 +44,7 @@ impl Room {
                     value += 1;
                 }
                 if self.block_set.is_some() {
-                    // value += 2;
+                    value += 2;
                 }
                 if self.enemy_type != 0 {
                     value += 1;

@@ -825,7 +825,7 @@ impl Generator {
             for x_pos in 0..24 {
                 if map.data[[y_pos, x_pos]].accessible
                     && (map.data[[y_pos, x_pos]].room_type == RoomType::Normal)
-                    && empty_room_odds > rng.gen_range(0.0..1.0)
+                    && empty_room_odds <= rng.gen_range(0.0..1.0)
                 {
                     map.data[[y_pos, x_pos]].enemy_type = rng.gen_range(1..=47);
                 }

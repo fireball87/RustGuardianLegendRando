@@ -70,6 +70,22 @@ pub fn boss_config(c: Signal<BossConfig>) -> Element {
                 "Randomize Boss Health Values (if we are rebalancing them)"
             }
             br {}
+
+            input {
+                r#type: "checkbox",
+                checked: c().allow_missingno,
+                id: "allow_missingno",
+                oninput: move |event| {
+                    c.set(BossConfig {
+                        allow_missingno: event.value().parse().unwrap_or(false),
+                        ..c()
+                    })
+                }
+            }
+            label { "for": "allow_missingno",
+                "Allow Missingno (shuffle in the skull miniboss even though it will have broken graphics)"
+            }
+            br {}
         }
     }
 }

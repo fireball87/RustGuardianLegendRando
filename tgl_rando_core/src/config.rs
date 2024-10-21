@@ -88,6 +88,7 @@ pub struct BossConfig {
     pub randomize_boss_health: bool,
     pub shuffle_bosses: bool,
     pub shuffle_final_boss: bool,
+    pub allow_missingno: bool,
 }
 
 impl Default for BossConfig {
@@ -97,6 +98,7 @@ impl Default for BossConfig {
             randomize_boss_health: true,
             shuffle_bosses: true,
             shuffle_final_boss: true,
+            allow_missingno: false,
         }
     }
 }

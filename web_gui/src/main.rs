@@ -2,6 +2,7 @@ mod boss_config;
 mod color_config;
 mod corridor_config;
 mod gui_error;
+mod header;
 mod hue_config;
 mod item_config;
 mod map_config;
@@ -44,6 +45,8 @@ fn app() -> Element {
 
     rsx! {
         div {
+            header::header {}
+
             corridor_config::corridor_config { c: corridor_cfg }
             boss_config::boss_config { c: boss_cfg }
             qol_hacks::qol_hacks { c: qol_cfg }

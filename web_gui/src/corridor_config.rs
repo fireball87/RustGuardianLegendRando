@@ -34,7 +34,7 @@ pub fn corridor_config(c: Signal<CorridorConfig>) -> Element {
                     })
                 }
             }
-            label { "for": "shuffleGround", "Shuffle Ground !!Needs Testing!!" }
+            label { "for": "shuffleGround", "Shuffle Ground" }
             br {}
 
             input {

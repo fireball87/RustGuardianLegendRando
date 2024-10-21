@@ -323,6 +323,20 @@ fn qol_hacks(c: Signal<QOLHacks>) -> Element {
             }
             label { "for": "remove_flash", "Remove Flashing (enemy erasers and boss kills)" }
             br {}
+
+            input {
+                r#type: "checkbox",
+                checked: c().always_go_fast,
+                id: "always_go_fast",
+                oninput: move |event| {
+                    c.set(QOLHacks {
+                        always_go_fast: event.value().parse().unwrap_or(false),
+                        ..c()
+                    })
+                }
+            }
+            label { "for": "always_go_fast", "Always Go Fast (Have 5 shield movement at 1 shield.)" }
+            br {}
         }
     }
 }

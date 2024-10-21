@@ -17,4 +17,7 @@ pub fn handle_qol_hacks(patcher: &mut Patcher, config: &Config) {
         patcher.add_change("0f", "894c"); //end flash
         patcher.add_change("EAEAEA", "d375"); //boss flash
     }
+    if config.qol_hacks.always_go_fast {
+        patcher.add_change("C001", "1FD48");
+    }
 }

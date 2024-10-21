@@ -67,6 +67,7 @@ pub struct QOLHacks {
     pub fix_hyper_laser: bool,
     pub enemy_erasers_unlocked_from_start: bool,
     pub remove_flash: bool,
+    pub always_go_fast: bool,
 }
 
 impl Default for QOLHacks {
@@ -76,6 +77,7 @@ impl Default for QOLHacks {
             fix_hyper_laser: true,
             enemy_erasers_unlocked_from_start: true,
             remove_flash: true,
+            always_go_fast: false,
         }
     }
 }

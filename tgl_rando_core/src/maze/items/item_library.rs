@@ -49,7 +49,8 @@ pub(crate) fn get_random_room_block(
             //	d594 pointy small triangles but now in red blocks
             let values = [
                 "6894", "3d94", "4694", "5094", "8794", "3f94", "8c94", "5d94", "5294", "e394",
-                "dd94", "df94", "d994", "d194", "d794", "d594",
+                "dd94", "df94", "d994", "d194", "d794",
+                /*"d594", breaks on one ways */
             ];
             Ok(values[rng.gen_range(0..values.len())].to_string())
         }

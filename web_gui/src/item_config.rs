@@ -65,7 +65,7 @@ pub fn item_config(c: Signal<ItemConfig>) -> Element {
 
             input {
                 r#type: "range",
-                min: 0,
+                min: if c().force_shields { 5 } else { 0 },
                 max: 20,
                 value: c().shield as i64,
                 oninput: move |event| {
@@ -82,6 +82,7 @@ pub fn item_config(c: Signal<ItemConfig>) -> Element {
             input {
                 r#type: "checkbox",
                 checked: c().force_shields,
+                disabled: c().shield < 5,
                 id: "force_shields",
                 oninput: move |event| {
                     c.set(ItemConfig {

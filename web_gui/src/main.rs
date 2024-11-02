@@ -6,6 +6,7 @@ mod header;
 mod hue_config;
 mod item_config;
 mod map_config;
+mod music_config;
 mod qol_hacks;
 
 use crate::gui_error::GuiError;
@@ -35,6 +36,7 @@ fn app() -> Element {
     let boss_cfg = use_signal(BossConfig::default);
     let qol_cfg = use_signal(QOLHacks::default);
     let color_cfg = use_signal(ColorOptions::default);
+    let music_cfg = use_signal(MusicConfig::default);
     let hue_cfg = use_signal(HueOptions::default);
 
     let mut advanced_visible = use_signal(|| false);
@@ -51,6 +53,7 @@ fn app() -> Element {
             boss_config::boss_config { c: boss_cfg }
             qol_hacks::qol_hacks { c: qol_cfg }
             color_config::color_config { c: color_cfg, h: hue_cfg }
+            music_config::music_config { c: music_cfg }
 
             h3 { "Advanced options." }
             input {
@@ -120,6 +123,7 @@ fn app() -> Element {
                                 color_strategy: colors,
                                 ..color_cfg()
                             },
+                            music_config: music_cfg(),
                             boss_config: boss_cfg(),
                             log: false,
                             seed: seed::make_seed(),

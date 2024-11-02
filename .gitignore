@@ -3,4 +3,6 @@
 /output
 /.idea
 /web_gui/dist
+*/.envrc
+*/.direnv/
 todo.txt

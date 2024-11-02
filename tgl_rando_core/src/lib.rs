@@ -4,6 +4,7 @@ mod corridor;
 mod helpers;
 mod logging;
 mod maze;
+mod music;
 pub mod patcher;
 mod qol_hacks;
 mod rebalance;
@@ -40,6 +41,7 @@ pub fn generate(patcher: &mut Patcher, cfg: &Config) -> Result<(), TGLError> {
     }
 
     colors::patch_themes::patch_all(cfg, patcher, &mut Seeder::from(&cfg.seed).make_rng())?;
+    music::patch_music(patcher, cfg, &mut Seeder::from(&cfg.seed).make_rng());
 
     qol_hacks::handle_qol_hacks(patcher, cfg);
     seed::write_seed(patcher, cfg);

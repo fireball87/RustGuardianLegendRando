@@ -103,6 +103,28 @@ impl Default for BossConfig {
     }
 }
 
+#[derive(PartialEq, Eq, Clone)]
+pub enum MusicOptions {
+    Untouched,
+    Corridor,
+    Overworld,
+    CorridorAndOverworld,
+}
+#[derive(PartialEq, Eq, Clone)]
+pub struct MusicConfig {
+    pub area_music: MusicOptions,
+    pub corridor_music: MusicOptions,
+}
+
+impl Default for crate::config::MusicConfig {
+    fn default() -> Self {
+        crate::config::MusicConfig {
+            area_music: MusicOptions::CorridorAndOverworld,
+            corridor_music: MusicOptions::CorridorAndOverworld,
+        }
+    }
+}
+
 #[derive(PartialEq, Clone)]
 pub struct MapConfig {
     pub min_area_size: usize,
@@ -171,6 +193,7 @@ pub struct Config {
     pub qol_hacks: QOLHacks,
     // pub bad_ideas: BadIdeas,
     pub color_options: ColorOptions,
+    pub music_config: MusicConfig,
     pub boss_config: BossConfig,
     pub log: bool,
     pub seed: String,
@@ -186,6 +209,7 @@ impl Default for Config {
             item_config: ItemConfig::default(),
             qol_hacks: QOLHacks::default(),
             color_options: ColorOptions::default(),
+            music_config: MusicConfig::default(),
             boss_config: BossConfig::default(),
             log: true,
             seed: rng_seed,
